@@ -2,86 +2,50 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>KBS JUKEBOX | NOME E ARTISTA</title>
+    <title>KBS TV | ROCKOLA PRO</title>
     <style>
         :root { --blue: #00d2ff; --pink: #ff007f; --bg: #050505; }
-        
-        body { 
-            background: var(--bg); color: #fff; font-family: 'Segoe UI', sans-serif; 
-            margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden;
-        }
-
-        header { 
-            background: #111; padding: 10px 25px; display: flex; justify-content: space-between; 
-            border-bottom: 2px solid var(--blue); align-items: center; height: 50px; flex-shrink: 0;
-        }
-        .creditos { background: var(--pink); padding: 5px 15px; border-radius: 5px; font-size: 18px; font-weight: bold; box-shadow: 0 0 10px var(--pink); }
-
-        #menu-pastas { 
-            display: flex; gap: 8px; padding: 10px; background: #151515; 
-            border-bottom: 1px solid #333; height: 45px; align-items: center; flex-shrink: 0;
-        }
+        body { background: var(--bg); color: #fff; font-family: 'Segoe UI', sans-serif; margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+        header { background: #111; padding: 10px 25px; display: flex; justify-content: space-between; border-bottom: 2px solid var(--blue); align-items: center; height: 50px; flex-shrink: 0; }
+        .creditos { background: var(--pink); padding: 5px 15px; border-radius: 5px; font-size: 18px; font-weight: bold; }
+        #menu-pastas { display: flex; gap: 8px; padding: 10px; background: #151515; border-bottom: 1px solid #333; height: 45px; align-items: center; flex-shrink: 0; }
         .pasta-item { padding: 5px 12px; background: #222; border-radius: 4px; border: 2px solid transparent; font-size: 13px; color: #777; }
         .pasta-item.foco { border-color: var(--blue); color: var(--blue); }
         .pasta-item.aberta { background: var(--blue); color: #000; font-weight: bold; }
-
-        main { flex: 1; display: grid; grid-template-columns: 1fr 240px; gap: 20px; padding: 15px; overflow: hidden; position: relative; }
-        
+        main { flex: 1; display: grid; grid-template-columns: 1fr 240px; gap: 20px; padding: 15px; overflow: hidden; }
         .col-left { display: flex; flex-direction: column; height: 100%; align-items: center; overflow: hidden; }
-
-        .tv-frame { 
-            width: 560px; height: 315px; 
-            background: #000; border: 5px solid #222; border-radius: 10px; 
-            overflow: hidden; flex-shrink: 0; transition: all 0.4s ease;
-            z-index: 100;
-        }
-        
-        .fullscreen-active {
-            position: fixed; top: 0; left: 0; width: 100vw !important; height: 100vh !important;
-            max-width: none !important; border: none; border-radius: 0;
-        }
-
+        .tv-frame { width: 560px; height: 315px; background: #000; border: 5px solid #222; border-radius: 10px; overflow: hidden; flex-shrink: 0; transition: 0.4s; z-index: 100; }
+        .fullscreen-active { position: fixed; top: 0; left: 0; width: 100vw !important; height: 100vh !important; border: none; border-radius: 0; }
         iframe { width: 100%; height: 100%; border: none; }
+
+        /* ROLETA COM NOME REAL */
+        #container-roleta { width: 100%; flex: 1; display: flex; align-items: center; gap: 25px; overflow-x: auto; padding: 60px 10px 10px 10px; background: #080808; }
+        .video-card { min-width: 160px; transition: 0.3s; background: #111; border-radius: 6px; border: 2px solid #333; position: relative; }
+        .video-card img { width: 100%; display: block; opacity: 0.4; }
         
-        /* ROLETA COM O NOME REAL DA MÚSICA */
-        #container-roleta { 
-            width: 100%; flex: 1; display: flex; align-items: center; gap: 25px; 
-            overflow-x: auto; padding: 50px 10px 10px 10px; background: #080808; margin-top: 10px;
-        }
-        .video-card { 
-            min-width: 150px; transition: 0.3s; background: #111; border-radius: 6px; 
-            border: 2px solid #333; overflow: visible; position: relative; 
-        }
-        .video-card img { width: 100%; display: block; opacity: 0.4; border-radius: 4px; }
-        
-        /* ESTILO DO NOME DO ARTISTA E MÚSICA */
-        .video-card .display-nome {
-            position: absolute; top: -50px; left: -10%; width: 120%;
-            background: linear-gradient(to bottom, var(--blue), #005f7a);
-            color: #000; font-size: 11px; font-weight: 900;
-            padding: 6px 4px; border-radius: 5px; text-align: center;
-            opacity: 0; transition: 0.3s; pointer-events: none;
-            box-shadow: 0 5px 15px rgba(0,210,255,0.4);
-            text-transform: uppercase;
-            z-index: 5;
+        .video-card .balao-nome {
+            position: absolute; top: -60px; left: 50%; transform: translateX(-50%);
+            width: 190px; background: var(--blue); color: #000;
+            padding: 8px; border-radius: 6px; font-weight: 900; font-size: 11px;
+            text-align: center; text-transform: uppercase; opacity: 0; transition: 0.3s;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5); pointer-events: none; border: 2px solid #fff;
         }
 
-        .video-card.foco-musica { transform: translateY(-10px); border-color: var(--pink); opacity: 1; }
+        .video-card.foco-musica { transform: translateY(-10px); border-color: var(--pink); }
         .video-card.foco-musica img { opacity: 1; }
-        .video-card.foco-musica .display-nome { opacity: 1; top: -55px; } 
+        .video-card.foco-musica .balao-nome { opacity: 1; top: -75px; }
 
-        .col-fila { background: #0f0f0f; border-radius: 8px; padding: 10px; border: 1px solid #222; overflow-y: auto; height: 100%; }
-        .fila-card { width: 100%; margin-bottom: 8px; border-radius: 5px; overflow: hidden; border: 2px solid #333; background: #000; }
-        .fila-card img { width: 100%; display: block; opacity: 0.6; }
-        .fila-card.atual { border-color: var(--blue); border-width: 3px; }
-
-        .footer-info { background: #111; padding: 5px; text-align: center; font-size: 11px; color: #444; flex-shrink: 0; }
+        /* FILA COM FOTOS PEQUENAS */
+        .col-fila { background: #0f0f0f; border-radius: 8px; padding: 10px; border: 1px solid #222; overflow-y: auto; }
+        .fila-card { width: 100%; margin-bottom: 8px; border-radius: 5px; overflow: hidden; border: 2px solid #333; opacity: 0.8; }
+        .fila-card.atual { border-color: var(--blue); opacity: 1; border-width: 3px; }
+        .fila-card img { width: 100%; display: block; }
     </style>
 </head>
 <body>
 
-<header id="app-header">
-    <div style="font-weight: bold; color: var(--blue);">KBS TV - ROCKOLA DIGITAL</div>
+<header>
+    <div style="font-weight: bold; color: var(--blue);">KBS TV - ROCKOLA</div>
     <div id="status-txt" style="color:var(--pink); font-size: 13px; font-weight: bold;">AGUARDANDO...</div>
     <div class="creditos">CRÉDITOS: <span id="val-creditos">0</span></div>
 </header>
@@ -90,19 +54,11 @@
 
 <main>
     <div class="col-left">
-        <div class="tv-frame" id="player-container">
-             <div style="display:flex; align-items:center; justify-content:center; height:100%; color:#444; font-weight: bold;">INSIRA CRÉDITOS</div>
-        </div>
+        <div class="tv-frame" id="player-container"></div>
         <div id="container-roleta"></div>
     </div>
-
-    <div class="col-fila" id="app-fila">
-        <h5 style="color:var(--pink); text-align:center; margin: 0 0 10px 0; font-size: 12px;">FILA DE REPRODUÇÃO</h5>
-        <div id="container-fila"></div>
-    </div>
+    <div class="col-fila" id="container-fila"></div>
 </main>
-
-<div class="footer-info">[ENTER] Crédito | [SETAS] Navegar | [E] Escolher | TELA CHEIA AUTOMÁTICA</div>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.0.0/firebase-app.js";
@@ -150,9 +106,8 @@
         dbDados[pastaAtiva].forEach((m, i) => {
             const card = document.createElement('div');
             card.className = `video-card ${i === focoM ? 'foco-musica' : ''}`;
-            // PUXA O NOME E ARTISTA DIRETO DO CAMPO TITULO DO FIREBASE
             card.innerHTML = `
-                <div class="display-nome">${m.titulo || 'MÚSICA SEM NOME'}</div>
+                <div class="balao-nome">${m.titulo}</div>
                 <img src="https://img.youtube.com/vi/${m.videoID}/mqdefault.jpg">
             `;
             cont.appendChild(card);
@@ -177,20 +132,19 @@
             const m = fila[0];
             const container = document.getElementById('player-container');
             container.classList.add('fullscreen-active');
-            container.innerHTML = `<iframe id="yt-player" src="https://www.youtube.com/embed/${m.id}?autoplay=1&enablejsapi=1&rel=0&controls=0" allow="autoplay"></iframe>`;
+            container.innerHTML = `<iframe src="https://www.youtube.com/embed/${m.id}?autoplay=1&enablejsapi=1&controls=0&rel=0" allow="autoplay"></iframe>`;
             renderFila();
 
             window.addEventListener('message', function(event) {
                 try {
                     const data = JSON.parse(event.data);
                     if (data.event === 'infoDelivery' && data.info && data.info.playerState === 0) {
-                        fila.shift(); 
-                        if (fila.length > 0) {
-                            iniciarMusica();
-                        } else {
-                            tocando = false;
-                            container.classList.remove('fullscreen-active');
-                            container.innerHTML = '<div style="color:#444">FIM DO SHOW</div>';
+                        fila.shift();
+                        if (fila.length > 0) iniciarMusica();
+                        else { 
+                            tocando = false; 
+                            container.classList.remove('fullscreen-active'); 
+                            container.innerHTML = ""; 
                             renderFila();
                         }
                     }
@@ -211,7 +165,7 @@
         if (e.key.toUpperCase() === "E") {
             if (musicasRestantes > 0 && pastaAtiva) {
                 const mus = dbDados[pastaAtiva][focoM];
-                fila.push({ id: mus.videoID });
+                fila.push({ id: mus.videoID, titulo: mus.titulo });
                 musicasRestantes--;
                 if(musicasRestantes % 5 === 0 && creditos > 0) creditos--;
                 document.getElementById('val-creditos').innerText = creditos;
