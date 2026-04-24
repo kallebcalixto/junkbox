@@ -2,7 +2,7 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>KBS JUKEBOX | VISUAL FINAL</title>
+    <title>KBS JUKEBOX | MODO CINEMA</title>
     <style>
         :root { --blue: #00d2ff; --pink: #ff007f; --bg: #050505; }
         
@@ -25,53 +25,49 @@
         .pasta-item.foco { border-color: var(--blue); color: var(--blue); }
         .pasta-item.aberta { background: var(--blue); color: #000; font-weight: bold; }
 
-        main { flex: 1; display: grid; grid-template-columns: 1fr 240px; gap: 20px; padding: 15px; overflow: hidden; }
+        main { flex: 1; display: grid; grid-template-columns: 1fr 240px; gap: 20px; padding: 15px; overflow: hidden; position: relative; }
         
         .col-left { display: flex; flex-direction: column; height: 100%; align-items: center; overflow: hidden; }
 
-        /* PLAYER TAMANHO PADRÃO */
+        /* PLAYER - MODO TELA CHEIA AUTOMÁTICO */
         .tv-frame { 
             width: 560px; height: 315px; 
             background: #000; border: 5px solid #222; border-radius: 10px; 
-            overflow: hidden; flex-shrink: 0;
+            overflow: hidden; flex-shrink: 0; transition: all 0.5s ease;
+            z-index: 100;
         }
+        
+        /* Classe que o JS vai colocar para ficar Tela Inteira */
+        .fullscreen-active {
+            position: fixed; top: 0; left: 0; width: 100vw !important; height: 100vh !important;
+            max-width: none !important; border: none; border-radius: 0;
+        }
+
         iframe { width: 100%; height: 100%; border: none; }
         
-        /* ROLETA DE SELEÇÃO */
         #container-roleta { 
             width: 100%; flex: 1; display: flex; align-items: center; gap: 15px; 
             overflow-x: auto; padding: 10px; background: #080808; margin-top: 10px;
         }
-        .video-card { 
-            min-width: 130px; transition: 0.3s; 
-            background: #111; border-radius: 6px; border: 2px solid #333; overflow: hidden; 
-        }
+        .video-card { min-width: 130px; transition: 0.3s; background: #111; border-radius: 6px; border: 2px solid #333; overflow: hidden; }
         .video-card img { width: 100%; display: block; opacity: 0.4; }
         .video-card.foco-musica { transform: translateY(-10px); border-color: var(--pink); opacity: 1; }
         .video-card.foco-musica img { opacity: 1; }
 
-        /* FILA COM FOTOS MENORES */
         .col-fila { background: #0f0f0f; border-radius: 8px; padding: 10px; border: 1px solid #222; overflow-y: auto; height: 100%; }
-        .fila-card { 
-            width: 100%; margin-bottom: 8px; border-radius: 5px; overflow: hidden; 
-            border: 2px solid #333; position: relative; background: #000;
-        }
-        .fila-card img { width: 100%; display: block; opacity: 0.6; } /* FOTO MENOR PELO CONTAINER */
-        .fila-card.atual { border-color: var(--blue); box-shadow: 0 0 10px var(--blue); }
-        .fila-card.atual img { opacity: 1; }
-        .fila-card .tag { 
-            position: absolute; bottom: 0; background: rgba(0,0,0,0.8); 
-            width: 100%; font-size: 9px; padding: 2px; text-align: center; color: var(--blue);
-        }
+        .fila-card { width: 100%; margin-bottom: 8px; border-radius: 5px; overflow: hidden; border: 2px solid #333; position: relative; background: #000; }
+        .fila-card img { width: 100%; display: block; opacity: 0.6; }
+        .fila-card.atual { border-color: var(--blue); }
+        .fila-card .tag { position: absolute; bottom: 0; background: rgba(0,0,0,0.8); width: 100%; font-size: 9px; padding: 2px; text-align: center; color: var(--blue); }
 
         .footer-info { background: #111; padding: 5px; text-align: center; font-size: 11px; color: #444; flex-shrink: 0; }
     </style>
 </head>
 <body>
 
-<header>
+<header id="app-header">
     <div style="font-weight: bold; color: var(--blue);">KBS TV - ROCKOLA</div>
-    <div id="status-txt" style="color:var(--pink); font-size: 13px;">INSERIR CRÉDITO [ENTER]</div>
+    <div id="status-txt" style="color:var(--pink); font-size: 13px;">AGUARDANDO...</div>
     <div class="creditos">CRÉDITOS: <span id="val-creditos">0</span></div>
 </header>
 
@@ -80,18 +76,18 @@
 <main>
     <div class="col-left">
         <div class="tv-frame" id="player-container">
-             <div style="display:flex; align-items:center; justify-content:center; height:100%; color:#333;">AGUARDANDO...</div>
+             <div style="display:flex; align-items:center; justify-content:center; height:100%; color:#333;">ESCOLHA PARA TOCAR</div>
         </div>
         <div id="container-roleta"></div>
     </div>
 
-    <div class="col-fila">
-        <h5 style="color:var(--pink); text-align:center; margin: 0 0 10px 0; font-size: 12px;">FILA DE ESPERA</h5>
+    <div class="col-fila" id="app-fila">
+        <h5 style="color:var(--pink); text-align:center; margin: 0 0 10px 0; font-size: 12px;">FILA</h5>
         <div id="container-fila"></div>
     </div>
 </main>
 
-<div class="footer-info">[ENTER] Crédito | [ESPAÇO] Abrir Pasta | [SETAS] Mudar | [E] Escolher</div>
+<div class="footer-info">[ENTER] Crédito | [E] Escolher | TELA CHEIA AUTOMÁTICA ATIVADA</div>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.0.0/firebase-app.js";
@@ -151,10 +147,7 @@
         fila.forEach((m, i) => {
             const div = document.createElement('div');
             div.className = `fila-card ${i === 0 && tocando ? 'atual' : ''}`;
-            div.innerHTML = `
-                <img src="https://img.youtube.com/vi/${m.id}/mqdefault.jpg">
-                <div class="tag">${i === 0 && tocando ? "TOCANDO" : "AGUARDANDO"}</div>
-            `;
+            div.innerHTML = `<img src="https://img.youtube.com/vi/${m.id}/mqdefault.jpg">`;
             cont.appendChild(div);
         });
     }
@@ -165,18 +158,27 @@
             const m = fila[0];
             const container = document.getElementById('player-container');
             
-            // Injeção com script para auto-pulo
-            container.innerHTML = `<iframe id="yt-player" src="https://www.youtube.com/embed/${m.id}?autoplay=1&enablejsapi=1&rel=0" allow="autoplay"></iframe>`;
+            // ATIVA TELA CHEIA VISUAL
+            container.classList.add('fullscreen-active');
+            
+            container.innerHTML = `<iframe id="yt-player" src="https://www.youtube.com/embed/${m.id}?autoplay=1&enablejsapi=1&rel=0&controls=0" allow="autoplay"></iframe>`;
             
             renderFila();
 
-            // Lógica para pular sozinho quando a música acaba
             window.addEventListener('message', function(event) {
                 try {
                     const data = JSON.parse(event.data);
                     if (data.event === 'infoDelivery' && data.info && data.info.playerState === 0) {
                         fila.shift(); 
-                        if (fila.length > 0) iniciarMusica(); else { tocando = false; container.innerHTML = '<div style="color:#333">FIM DA FILA</div>'; renderFila(); }
+                        if (fila.length > 0) {
+                            iniciarMusica();
+                        } else {
+                            // VOLTA AO NORMAL
+                            tocando = false;
+                            container.classList.remove('fullscreen-active');
+                            container.innerHTML = '<div style="color:#333">PRÓXIMO CLIENTE...</div>';
+                            renderFila();
+                        }
                     }
                 } catch(e){}
             });
@@ -184,36 +186,22 @@
     }
 
     document.addEventListener('keydown', (e) => {
-        if (e.key === "Enter") {
-            creditos++; musicasRestantes += 5;
-            document.getElementById('val-creditos').innerText = creditos;
-        }
-
+        if (e.key === "Enter") { creditos++; musicasRestantes += 5; document.getElementById('val-creditos').innerText = creditos; }
         if (e.key === "ArrowRight") { focoP = (focoP + 1) % generos.length; renderPastas(); }
         if (e.key === "ArrowLeft") { focoP = (focoP - 1 + generos.length) % generos.length; renderPastas(); }
-
-        if (e.code === "Space") {
-            e.preventDefault();
-            pastaAtiva = generos[focoP]; focoM = 0;
-            renderPastas(); renderRoleta();
-        }
-
+        if (e.code === "Space") { e.preventDefault(); pastaAtiva = generos[focoP]; focoM = 0; renderPastas(); renderRoleta(); }
         if (pastaAtiva) {
             if (e.key === "ArrowDown") { focoM = (focoM + 1) % dbDados[pastaAtiva].length; renderRoleta(); }
             if (e.key === "ArrowUp") { focoM = (focoM - 1 + dbDados[pastaAtiva].length) % dbDados[pastaAtiva].length; renderRoleta(); }
         }
-
         if (e.key.toUpperCase() === "E") {
             if (musicasRestantes > 0 && pastaAtiva) {
                 const mus = dbDados[pastaAtiva][focoM];
-                fila.push({ id: mus.videoID, titulo: mus.titulo });
+                fila.push({ id: mus.videoID });
                 musicasRestantes--;
-                
                 if(musicasRestantes % 5 === 0 && creditos > 0) creditos--;
                 document.getElementById('val-creditos').innerText = creditos;
                 renderFila();
-
-                // Só toca quando o "pacote" de escolhas terminar
                 if (musicasRestantes === 0 && !tocando) iniciarMusica();
             }
         }
