@@ -2,7 +2,7 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>KBS TV | ROCKOLA ARCADE EDITION</title>
+    <title>KBS TV | ROCKOLA ARCADE CUSTOM</title>
     <style>
         :root { --blue: #00d2ff; --pink: #ff007f; --bg: #000; }
         body { background: var(--bg); color: #fff; font-family: sans-serif; margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
@@ -20,12 +20,7 @@
         main { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; background: radial-gradient(circle, #1a1a1a 0%, #000 100%); }
         
         .tv-frame { width: 70%; max-width: 700px; aspect-ratio: 16/9; background: #000; border: 6px solid #222; border-radius: 12px; overflow: hidden; flex-shrink: 0; }
-
-        .fullscreen-active { 
-            position: fixed !important; top: 0 !important; left: 0 !important; 
-            width: 100vw !important; height: 100vh !important; 
-            z-index: 9999 !important; border: none !important; border-radius: 0 !important; 
-        }
+        .fullscreen-active { position: fixed !important; top: 0 !important; left: 0 !important; width: 100vw !important; height: 100vh !important; z-index: 9999 !important; border: none !important; border-radius: 0 !important; }
 
         #yt-player { width: 100%; height: 100%; }
 
@@ -51,7 +46,7 @@
 </header>
 
 <main>
-    <div id="status-txt" style="color:var(--pink); font-weight:bold; margin-bottom:10px;">AGUARDANDO...</div>
+    <div id="status-txt" style="color:var(--pink); font-weight:bold; margin-bottom:10px;">AGUARDANDO SELEÇÃO...</div>
     <div class="tv-frame" id="player-container">
         <div id="yt-player"></div>
     </div>
@@ -74,10 +69,16 @@
     let player, creditos = 0, musicasRestantes = 0, dbDados = {}, generos = [], focoP = 0, focoM = 0;
     let pastaAtiva = null, fila = [], tocando = false;
 
-    // --- SONS DE FLIPERAMA ---
-    const sndCoin = new Audio('https://www.myinstants.com/media/sounds/insert-coin_5Y5vC2C.mp3');
-    const sndMove = new Audio('https://www.myinstants.com/media/sounds/move_SOnpG4M.mp3');
-    const sndSelect = new Audio('https://www.myinstants.com/media/sounds/select_MSu2Cof.mp3');
+    // --- CONFIGURAÇÃO DE ÁUDIO (COLE SEUS LINKS AQUI) ---
+    const LINKS_SONS = {
+        moeda: 'https://www.myinstants.com/media/sounds/insert-coin_5Y5vC2C.mp3',
+        navegar: 'https://www.myinstants.com/media/sounds/move_SOnpG4M.mp3',
+        confirmar: 'https://www.myinstants.com/media/sounds/select_MSu2Cof.mp3'
+    };
+
+    const sndCoin = new Audio(LINKS_SONS.moeda);
+    const sndMove = new Audio(LINKS_SONS.navegar);
+    const sndSelect = new Audio(LINKS_SONS.confirmar);
 
     window.onYouTubeIframeAPIReady = function() {
         player = new YT.Player('yt-player', {
@@ -147,15 +148,14 @@
     }
 
     document.addEventListener('keydown', (e) => {
-        // SOM DE FICHA (ENTER)
         if (e.key === "Enter") { 
+            sndCoin.currentTime = 0;
             sndCoin.play();
             creditos++; 
             musicasRestantes += 5; 
             document.getElementById('val-creditos').innerText = creditos; 
         }
 
-        // SOM DE MOVIMENTO (SETAS)
         if (["ArrowRight", "ArrowLeft", "ArrowUp", "ArrowDown"].includes(e.key)) {
             sndMove.currentTime = 0;
             sndMove.play();
@@ -164,9 +164,9 @@
         if (e.key === "ArrowRight") { focoP = (focoP + 1) % generos.length; onValue(ref(db, 'jukebox'), () => {}); }
         if (e.key === "ArrowLeft") { focoP = (focoP - 1 + generos.length) % generos.length; onValue(ref(db, 'jukebox'), () => {}); }
         
-        // SOM DE SELEÇÃO (ESPAÇO)
         if (e.code === "Space") { 
             e.preventDefault(); 
+            sndSelect.currentTime = 0;
             sndSelect.play();
             pastaAtiva = generos[focoP]; 
             focoM = 0; 
@@ -178,13 +178,15 @@
             if (e.key === "ArrowDown") { focoM = (focoM + 1) % lista.length; renderRoleta(); }
             if (e.key === "ArrowUp") { focoM = (focoM - 1 + lista.length) % lista.length; renderRoleta(); }
             
-            // SOM DE ESCOLHA DE MÚSICA (E)
             if (e.key.toUpperCase() === "E" && musicasRestantes > 0) {
                 sndSelect.currentTime = 0;
                 sndSelect.play();
                 fila.push({ id: lista[focoM].videoID });
                 musicasRestantes--;
-                if(musicasRestantes % 5 === 0 && creditos > 0) { creditos--; document.getElementById('val-creditos').innerText = creditos; }
+                if(musicasRestantes % 5 === 0 && creditos > 0) { 
+                    creditos--; 
+                    document.getElementById('val-creditos').innerText = creditos; 
+                }
                 renderFilaVisual();
                 if (musicasRestantes === 0 && !tocando) {
                     tocarVideo(fila[0].id);
