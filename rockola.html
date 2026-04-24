@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<title>KBS ROCKOLA | FINAL STAGE</title>
+<style>
+  :root { --blue: #00d2ff; --pink: #ff007f; --bg: #000; }
+  
+  body {
+    background: var(--bg); color: #eee; font-family: 'Segoe UI', sans-serif;
+    margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden;
+  }
+
+  /* Menu de Categorias */
+  header {
+    background: #111; padding: 15px 20px; display: flex; gap: 12px;
+    border-bottom: 2px solid var(--blue); overflow-x: auto; align-items: center;
+  }
+  
+  .btn-gen {
+    background: #222; border: 1px solid var(--blue); color: var(--blue);
+    padding: 10px 22px; border-radius: 30px; cursor: pointer; font-weight: bold;
+    white-space: nowrap; transition: 0.3s;
+  }
+  
+  .btn-gen:hover { background: var(--blue); color: #000; box-shadow: 0 0 15px var(--blue); }
+
+  /* Área do Player */
+  main {
+    flex: 1; display: flex; flex-direction: column; align-items: center;
+    justify-content: center; background: radial-gradient(circle, #1a1a1a 0%, #000 100%);
+  }
+
+  .tv-frame {
+    width: 90%; max-width: 850px; aspect-ratio: 16/9;
+    background: #000; border: 10px solid #222; border-radius: 15px;
+    box-shadow: 0 0 50px #000; overflow: hidden;
+  }
+
+  /* Catálogo Visual (O Movimento que você pediu) */
+  footer {
+    height: 220px; background: #0a0a0a; border-top: 1px solid #222;
+    display: flex; align-items: center; padding: 0 30px; overflow-x: auto;
+  }
+
+  .video-card {
+    min-width: 180px; margin-right: 20px; cursor: pointer;
+    transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    background: #151515; border-radius: 10px; border: 1px solid #333;
+    overflow: hidden; text-align: center;
+  }
+
+  /* EFEITO DE SUBIDA E ZOOM (O QUE VOCÊ PEDIU) */
+  .video-card:hover {
+    transform: translateY(-30px) scale(1.1); /* Sobe 30px e cresce */
+    border-color: var(--pink);
+    box-shadow: 0 15px 30px rgba(255, 0, 127, 0.4);
+  }
+
+  .video-card img { width: 100%; display: block; }
+</style>
+</head>
+<body>
+
+<header id="menu-generos">
+    <h2 style="color:var(--blue); margin-right: 20px;">KBS TV</h2>
+</header>
+
+<main>
+    <div id="txt-status" style="color:var(--pink); margin-bottom:15px; font-weight:bold;">KBS ROCKOLA</div>
+    <div class="tv-frame" id="player-container">
+        <div style="height:100%; display:flex; align-items:center; justify-content:center; color:#333;">CLIQUE NA FOTO ABAIXO</div>
+    </div>
+</main>
+
+<footer>
+    <div id="video-list" style="display: flex;"></div>
+</footer>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/9.0.0/firebase-app.js";
+  import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/9.0.0/firebase-database.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyAWAIL5jCP0oziHaGxbaMfZLlLb5DxtqrU",
+    authDomain: "junck-3b41b.firebaseapp.com",
+    databaseURL: "https://junck-3b41b-default-rtdb.firebaseio.com",
+    projectId: "junck-3b41b"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getDatabase(app);
+
+  let musicasData = {};
+
+  // ESSA FUNÇÃO É A QUE MATA O ERRO 153
+  window.rodarVideo = (id, titulo) => {
+    const container = document.getElementById('player-container');
+    // Injetamos o iframe puro como no seu arquivo que funciona
+    // O segredo é NÃO usar a API de JS do YouTube aqui para evitar o Erro 153
+    container.innerHTML = `<iframe 
+        src="https://www.youtube.com/embed/${id}?autoplay=1" 
+        style="width:100%; height:100%; border:none;"
+        allow="autoplay; encrypted-media" 
+        allowfullscreen>
+      </iframe>`;
+    
+    document.getElementById('txt-status').innerText = "TOCANDO: " + titulo.toUpperCase();
+  };
+
+  onValue(ref(db, 'musicas'), (snapshot) => {
+    const bar = document.getElementById('menu-generos');
+    musicasData = {};
+    bar.innerHTML = "<h2 style='color:var(--blue); margin-right: 20px;'>KBS TV</h2>";
+
+    snapshot.forEach(child => {
+      const m = child.val();
+      if (!musicasData[m.genero]) musicasData[m.genero] = [];
+      musicasData[m.genero].push(m);
+    });
+
+    for (let gen in musicasData) {
+      const btn = document.createElement('button');
+      btn.className = 'btn-gen';
+      btn.innerText = gen;
+      btn.onclick = () => renderCatalogo(gen);
+      bar.appendChild(btn);
+    }
+  });
+
+  function renderCatalogo(genero) {
+    const list = document.getElementById('video-list');
+    list.innerHTML = "";
+    
+    musicasData[genero].forEach(v => {
+      const card = document.createElement('div');
+      card.className = 'video-card';
+      card.innerHTML = `
+        <img src="https://img.youtube.com/vi/${v.videoID}/mqdefault.jpg">
+        <div style="padding:8px; font-size:11px;">PLAY</div>
+      `;
+      card.onclick = () => window.rodarVideo(v.videoID, genero);
+      list.appendChild(card);
+    });
+  }
+</script>
+</body>
+</html>
