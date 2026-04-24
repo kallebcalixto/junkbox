@@ -2,15 +2,14 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>KBS TV | ROCKOLA OFICIAL</title>
+    <title>KBS TV | ROCKOLA ARCADE EDITION</title>
     <style>
         :root { --blue: #00d2ff; --pink: #ff007f; --bg: #000; }
-        body { background: var(--bg); color: #fff; font-family: 'Segoe UI', Arial, sans-serif; margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+        body { background: var(--bg); color: #fff; font-family: sans-serif; margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
         
         header { 
             background: #111; padding: 0 20px; display: flex; justify-content: space-between;
             border-bottom: 2px solid var(--blue); align-items: center; height: 65px; flex-shrink: 0;
-            z-index: 100;
         }
         .nav-pastas { display: flex; gap: 8px; overflow-x: auto; flex: 1; margin-right: 15px; }
         .btn-gen { background: #222; border: 1px solid var(--blue); color: var(--blue); padding: 8px 15px; border-radius: 20px; cursor: pointer; white-space: nowrap; font-size: 13px; font-weight: bold; }
@@ -19,9 +18,14 @@
         .display-creditos { background: var(--pink); color: #fff; padding: 10px 18px; border-radius: 8px; font-weight: 900; font-size: 18px; box-shadow: 0 0 15px var(--pink); }
 
         main { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; background: radial-gradient(circle, #1a1a1a 0%, #000 100%); }
+        
         .tv-frame { width: 70%; max-width: 700px; aspect-ratio: 16/9; background: #000; border: 6px solid #222; border-radius: 12px; overflow: hidden; flex-shrink: 0; }
 
-        .fullscreen-active { position: fixed !important; top: 0 !important; left: 0 !important; width: 100vw !important; height: 100vh !important; z-index: 9999 !important; border: none !important; border-radius: 0 !important; }
+        .fullscreen-active { 
+            position: fixed !important; top: 0 !important; left: 0 !important; 
+            width: 100vw !important; height: 100vh !important; 
+            z-index: 9999 !important; border: none !important; border-radius: 0 !important; 
+        }
 
         #yt-player { width: 100%; height: 100%; }
 
@@ -70,25 +74,14 @@
     let player, creditos = 0, musicasRestantes = 0, dbDados = {}, generos = [], focoP = 0, focoM = 0;
     let pastaAtiva = null, fila = [], tocando = false;
 
-    // SONS
-    const LINKS_SONS = {
-        moeda: 'https://www.myinstants.com/media/sounds/insert-coin_5Y5vC2C.mp3',
-        navegar: 'https://www.myinstants.com/media/sounds/move_SOnpG4M.mp3',
-        confirmar: 'https://www.myinstants.com/media/sounds/select_MSu2Cof.mp3'
-    };
-    const sndCoin = new Audio(LINKS_SONS.moeda);
-    const sndMove = new Audio(LINKS_SONS.navegar);
-    const sndSelect = new Audio(LINKS_SONS.confirmar);
+    // --- SONS DE FLIPERAMA ---
+    const sndCoin = new Audio('https://www.myinstants.com/media/sounds/insert-coin_5Y5vC2C.mp3');
+    const sndMove = new Audio('https://www.myinstants.com/media/sounds/move_SOnpG4M.mp3');
+    const sndSelect = new Audio('https://www.myinstants.com/media/sounds/select_MSu2Cof.mp3');
 
     window.onYouTubeIframeAPIReady = function() {
         player = new YT.Player('yt-player', {
-            height: '100%',
-            width: '100%',
-            playerVars: { 'autoplay': 1, 'controls': 0, 'rel': 0, 'showinfo': 0, 'modestbranding': 1, 'iv_load_policy': 3 },
-            events: { 
-                'onReady': (event) => { console.log("Player Pronto"); },
-                'onStateChange': onPlayerStateChange 
-            }
+            events: { 'onStateChange': onPlayerStateChange }
         });
     };
 
@@ -96,28 +89,22 @@
         if (event.data === YT.PlayerState.ENDED) {
             fila.shift();
             if (fila.length > 0) {
-                tocarProximo();
+                tocarVideo(fila[0].id);
             } else {
                 tocando = false;
                 document.getElementById('player-container').classList.remove('fullscreen-active');
-                document.getElementById('status-txt').innerText = "KBS TV - SELECIONE";
+                document.getElementById('status-txt').innerText = "KBS TV - PRONTA";
                 renderFilaVisual();
             }
         }
     }
 
-    function tocarProximo() {
-        if (fila.length > 0) {
-            tocando = true;
-            const container = document.getElementById('player-container');
-            container.classList.add('fullscreen-active');
-            
-            // Força o carregamento do vídeo pelo ID
-            player.loadVideoById(fila[0].id);
-            player.playVideo(); // Comando extra para garantir o início
-            
-            renderFilaVisual();
-        }
+    function tocarVideo(id) {
+        tocando = true;
+        const container = document.getElementById('player-container');
+        container.classList.add('fullscreen-active');
+        player.loadVideoById(id);
+        renderFilaVisual();
     }
 
     onValue(ref(db, 'jukebox'), (snap) => {
@@ -160,15 +147,30 @@
     }
 
     document.addEventListener('keydown', (e) => {
-        if (e.key === "Enter") { sndCoin.play(); creditos++; musicasRestantes += 5; document.getElementById('val-creditos').innerText = creditos; }
-        if (["ArrowRight", "ArrowLeft", "ArrowUp", "ArrowDown"].includes(e.key)) { sndMove.currentTime = 0; sndMove.play(); }
+        // SOM DE FICHA (ENTER)
+        if (e.key === "Enter") { 
+            sndCoin.play();
+            creditos++; 
+            musicasRestantes += 5; 
+            document.getElementById('val-creditos').innerText = creditos; 
+        }
+
+        // SOM DE MOVIMENTO (SETAS)
+        if (["ArrowRight", "ArrowLeft", "ArrowUp", "ArrowDown"].includes(e.key)) {
+            sndMove.currentTime = 0;
+            sndMove.play();
+        }
 
         if (e.key === "ArrowRight") { focoP = (focoP + 1) % generos.length; onValue(ref(db, 'jukebox'), () => {}); }
         if (e.key === "ArrowLeft") { focoP = (focoP - 1 + generos.length) % generos.length; onValue(ref(db, 'jukebox'), () => {}); }
         
+        // SOM DE SELEÇÃO (ESPAÇO)
         if (e.code === "Space") { 
-            e.preventDefault(); sndSelect.play();
-            pastaAtiva = generos[focoP]; focoM = 0; renderRoleta(); 
+            e.preventDefault(); 
+            sndSelect.play();
+            pastaAtiva = generos[focoP]; 
+            focoM = 0; 
+            renderRoleta(); 
         }
         
         if (pastaAtiva) {
@@ -176,14 +178,16 @@
             if (e.key === "ArrowDown") { focoM = (focoM + 1) % lista.length; renderRoleta(); }
             if (e.key === "ArrowUp") { focoM = (focoM - 1 + lista.length) % lista.length; renderRoleta(); }
             
+            // SOM DE ESCOLHA DE MÚSICA (E)
             if (e.key.toUpperCase() === "E" && musicasRestantes > 0) {
-                sndSelect.currentTime = 0; sndSelect.play();
+                sndSelect.currentTime = 0;
+                sndSelect.play();
                 fila.push({ id: lista[focoM].videoID });
                 musicasRestantes--;
                 if(musicasRestantes % 5 === 0 && creditos > 0) { creditos--; document.getElementById('val-creditos').innerText = creditos; }
                 renderFilaVisual();
                 if (musicasRestantes === 0 && !tocando) {
-                    tocarProximo();
+                    tocarVideo(fila[0].id);
                 }
             }
         }
