@@ -2,7 +2,7 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>KBS JUKEBOX | MODO COMERCIAL</title>
+    <title>KBS JUKEBOX | VISUAL PRO</title>
     <style>
         :root { --blue: #00d2ff; --pink: #ff007f; --bg: #050505; }
         
@@ -15,7 +15,7 @@
             background: #111; padding: 10px 25px; display: flex; justify-content: space-between; 
             border-bottom: 2px solid var(--blue); align-items: center; height: 50px; flex-shrink: 0;
         }
-        .creditos { background: var(--pink); padding: 5px 15px; border-radius: 5px; font-size: 18px; font-weight: bold; box-shadow: 0 0 10px var(--pink); }
+        .creditos { background: var(--pink); padding: 5px 15px; border-radius: 5px; font-size: 18px; font-weight: bold; }
 
         #menu-pastas { 
             display: flex; gap: 8px; padding: 10px; background: #151515; 
@@ -25,38 +25,44 @@
         .pasta-item.foco { border-color: var(--blue); color: var(--blue); }
         .pasta-item.aberta { background: var(--blue); color: #000; font-weight: bold; }
 
-        main { flex: 1; display: grid; grid-template-columns: 1fr 300px; gap: 20px; padding: 20px; overflow: hidden; }
+        main { flex: 1; display: grid; grid-template-columns: 1fr 320px; gap: 20px; padding: 15px; overflow: hidden; }
         
-        .col-left { display: flex; flex-direction: column; height: 100%; align-items: center; }
+        .col-left { display: flex; flex-direction: column; height: 100%; align-items: center; overflow: hidden; }
 
-        /* PLAYER PADRÃO 16:9 - VISUAL LIMPO */
+        /* PLAYER TAMANHO IDEAL (MÉDIO) */
         .tv-frame { 
-            width: 100%; 
-            max-width: 800px; /* Tamanho legal, não fica gigante nem pequeno */
-            aspect-ratio: 16 / 9; 
-            background: #000; border: 6px solid #222; border-radius: 12px; 
-            overflow: hidden; flex-shrink: 0; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            width: 560px; height: 315px; /* Tamanho padrão YouTube médio */
+            background: #000; border: 5px solid #222; border-radius: 10px; 
+            overflow: hidden; flex-shrink: 0; box-shadow: 0 0 20px rgba(0,0,0,0.8);
         }
         iframe { width: 100%; height: 100%; border: none; }
         
         /* ROLETA SEMPRE VISÍVEL */
         #container-roleta { 
             width: 100%; flex: 1; display: flex; align-items: center; gap: 15px; 
-            overflow-x: auto; padding: 10px; background: #080808; margin-top: 15px;
-            border-top: 1px solid #1a1a1a;
+            overflow-x: auto; padding: 10px; background: #080808; margin-top: 10px;
         }
         .video-card { 
-            min-width: 140px; transition: 0.3s; 
+            min-width: 130px; transition: 0.3s; 
             background: #111; border-radius: 6px; border: 2px solid #333; overflow: hidden; 
         }
         .video-card img { width: 100%; display: block; opacity: 0.4; }
         .video-card.foco-musica { transform: translateY(-10px); border-color: var(--pink); opacity: 1; }
         .video-card.foco-musica img { opacity: 1; }
 
-        /* FILA LATERAL */
+        /* FILA COM FOTOS (SEM CÓDIGO) */
         .col-fila { background: #0f0f0f; border-radius: 8px; padding: 10px; border: 1px solid #222; overflow-y: auto; height: 100%; }
-        .fila-item { background: #1a1a1a; padding: 8px; margin-bottom: 5px; border-radius: 3px; font-size: 12px; border-left: 4px solid var(--pink); color: #ccc; }
-        .fila-item.atual { border-left-color: var(--blue); color: var(--blue); font-weight: bold; background: #222; }
+        .fila-card { 
+            width: 100%; margin-bottom: 10px; border-radius: 5px; overflow: hidden; 
+            border: 2px solid #333; position: relative; background: #000;
+        }
+        .fila-card img { width: 100%; display: block; opacity: 0.7; }
+        .fila-card.atual { border-color: var(--blue); box-shadow: 0 0 10px var(--blue); }
+        .fila-card.atual img { opacity: 1; }
+        .fila-card .tag { 
+            position: absolute; bottom: 0; background: rgba(0,0,0,0.8); 
+            width: 100%; font-size: 10px; padding: 2px; text-align: center; color: var(--blue);
+        }
 
         .footer-info { background: #111; padding: 5px; text-align: center; font-size: 11px; color: #444; flex-shrink: 0; }
     </style>
@@ -64,8 +70,8 @@
 <body>
 
 <header>
-    <div style="font-weight: bold; color: var(--blue);">KBS TV - MODO COMERCIAL</div>
-    <div id="status-txt" style="color:var(--pink); font-size: 14px; font-weight: bold;">AGUARDANDO ESCOLHA...</div>
+    <div style="font-weight: bold; color: var(--blue);">KBS TV - JUKEBOX PRO</div>
+    <div id="status-txt" style="color:var(--pink); font-size: 13px;">ESCOLHA SUAS MÚSICAS</div>
     <div class="creditos">CRÉDITOS: <span id="val-creditos">0</span></div>
 </header>
 
@@ -74,21 +80,18 @@
 <main>
     <div class="col-left">
         <div class="tv-frame" id="player-container">
-             <div style="color:#333; display:flex; align-items:center; justify-content:center; height:100%; font-weight: bold;">INSIRA CRÉDITOS E ESCOLHA AS MÚSICAS</div>
+             <div style="display:flex; align-items:center; justify-content:center; height:100%; color:#444;">AGUARDANDO MÚSICAS...</div>
         </div>
-        <div style="color: var(--blue); font-size: 11px; font-weight: bold; margin-top: 15px;">USE AS SETAS E APERTE [E] PARA ESCOLHER</div>
         <div id="container-roleta"></div>
     </div>
 
     <div class="col-fila">
-        <h5 style="color:var(--pink); text-align:center; margin: 0 0 10px 0;">FILA DE REPRODUÇÃO</h5>
+        <h5 style="color:var(--pink); text-align:center; margin: 0 0 10px 0;">FILA (FOTOS)</h5>
         <div id="container-fila"></div>
     </div>
 </main>
 
-<div class="footer-info">
-    [ENTER] Crédito | [ESPAÇO] Pasta | [SETAS] Navegar | [E] Confirmar (O player só inicia após gastar os créditos)
-</div>
+<div class="footer-info">[ENTER] Créditos | [ESPAÇO] Abrir | [SETAS] Mudar | [E] Escolher</div>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.0.0/firebase-app.js";
@@ -107,6 +110,7 @@
     let creditos = 0, musicasRestantes = 0, dbDados = {}, generos = [], focoP = 0, focoM = 0;
     let pastaAtiva = null, fila = [], tocando = false;
 
+    // Firebase
     onValue(ref(db, 'musicas'), (snapshot) => {
         dbDados = {};
         snapshot.forEach(c => {
@@ -147,8 +151,11 @@
         cont.innerHTML = "";
         fila.forEach((m, i) => {
             const div = document.createElement('div');
-            div.className = `fila-item ${i === 0 && tocando ? 'atual' : ''}`;
-            div.innerText = (i === 0 && tocando ? "▶ " : "") + m.titulo;
+            div.className = `fila-card ${i === 0 && tocando ? 'atual' : ''}`;
+            div.innerHTML = `
+                <img src="https://img.youtube.com/vi/${m.id}/mqdefault.jpg">
+                <div class="tag">${i === 0 && tocando ? "TOCANDO AGORA" : "NA FILA"}</div>
+            `;
             cont.appendChild(div);
         });
     }
@@ -158,19 +165,30 @@
             tocando = true;
             const m = fila[0];
             const container = document.getElementById('player-container');
-            // Usando o player com controles para o usuário ver o tempo, se quiser
-            container.innerHTML = `<iframe src="https://www.youtube.com/embed/${m.id}?autoplay=1&rel=0&controls=1" allow="autoplay; encrypted-media" allowfullscreen></iframe>`;
-            document.getElementById('status-txt').innerText = "TOCANDO: " + m.titulo;
+            
+            // Adicionado listener para pular quando acabar
+            container.innerHTML = `<iframe id="yt-player" src="https://www.youtube.com/embed/${m.id}?autoplay=1&enablejsapi=1&rel=0" allow="autoplay"></iframe>`;
+            
+            document.getElementById('status-txt').innerText = "SHOW EM ANDAMENTO";
             renderFila();
+
+            // Detectar fim da música para pular
+            window.addEventListener('message', function(event) {
+                if (event.data) {
+                    const data = JSON.parse(event.data);
+                    if (data.event === 'infoDelivery' && data.info && data.info.playerState === 0) {
+                        fila.shift(); // Remove a que acabou
+                        if (fila.length > 0) iniciarMusica(); else { tocando = false; container.innerHTML = ""; }
+                    }
+                }
+            });
         }
     }
 
     document.addEventListener('keydown', (e) => {
         if (e.key === "Enter") {
-            creditos++; 
-            musicasRestantes += 5;
+            creditos++; musicasRestantes += 5;
             document.getElementById('val-creditos').innerText = creditos;
-            document.getElementById('status-txt').innerText = "CRÉDITOS: ESCOLHA " + musicasRestantes + " MÚSICAS";
         }
 
         if (e.key === "ArrowRight") { focoP = (focoP + 1) % generos.length; renderPastas(); }
@@ -178,10 +196,8 @@
 
         if (e.code === "Space") {
             e.preventDefault();
-            pastaAtiva = generos[focoP];
-            focoM = 0;
-            renderPastas();
-            renderRoleta();
+            pastaAtiva = generos[focoP]; focoM = 0;
+            renderPastas(); renderRoleta();
         }
 
         if (pastaAtiva) {
@@ -192,24 +208,15 @@
         if (e.key.toUpperCase() === "E") {
             if (musicasRestantes > 0 && pastaAtiva) {
                 const mus = dbDados[pastaAtiva][focoM];
-                fila.push({ id: mus.videoID, titulo: mus.titulo || pastaAtiva });
-                
+                fila.push({ id: mus.videoID, titulo: mus.titulo });
                 musicasRestantes--;
                 
-                // Atualiza os créditos visuais a cada 5 escolhas
                 if(musicasRestantes % 5 === 0 && creditos > 0) creditos--;
                 document.getElementById('val-creditos').innerText = creditos;
-                
                 renderFila();
 
-                // LÓGICA PEDIDA: Só inicia se não houver mais saldo de escolha
-                if (musicasRestantes === 0) {
-                    if (!tocando) iniciarMusica();
-                } else {
-                    document.getElementById('status-txt').innerText = "FALTAM " + musicasRestantes + " ESCOLHAS";
-                }
-            } else if (musicasRestantes === 0 && creditos === 0) {
-                alert("SEM SALDO! APERTE ENTER.");
+                // Só toca quando acabar de escolher o pacote de créditos
+                if (musicasRestantes === 0 && !tocando) iniciarMusica();
             }
         }
     });
