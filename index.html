@@ -2,7 +2,7 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>KBS TV | ROCKOLA AUTO-NEXT</title>
+    <title>KBS TV | ROCKOLA ARCADE EDITION</title>
     <style>
         :root { --blue: #00d2ff; --pink: #ff007f; --bg: #000; }
         body { background: var(--bg); color: #fff; font-family: sans-serif; margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
@@ -21,7 +21,6 @@
         
         .tv-frame { width: 70%; max-width: 700px; aspect-ratio: 16/9; background: #000; border: 6px solid #222; border-radius: 12px; overflow: hidden; flex-shrink: 0; }
 
-        /* TELA CHEIA TOTAL */
         .fullscreen-active { 
             position: fixed !important; top: 0 !important; left: 0 !important; 
             width: 100vw !important; height: 100vh !important; 
@@ -75,7 +74,11 @@
     let player, creditos = 0, musicasRestantes = 0, dbDados = {}, generos = [], focoP = 0, focoM = 0;
     let pastaAtiva = null, fila = [], tocando = false;
 
-    // Inicializa o Player do YT
+    // --- SONS DE FLIPERAMA ---
+    const sndCoin = new Audio('https://www.myinstants.com/media/sounds/insert-coin_5Y5vC2C.mp3');
+    const sndMove = new Audio('https://www.myinstants.com/media/sounds/move_SOnpG4M.mp3');
+    const sndSelect = new Audio('https://www.myinstants.com/media/sounds/select_MSu2Cof.mp3');
+
     window.onYouTubeIframeAPIReady = function() {
         player = new YT.Player('yt-player', {
             events: { 'onStateChange': onPlayerStateChange }
@@ -84,7 +87,7 @@
 
     function onPlayerStateChange(event) {
         if (event.data === YT.PlayerState.ENDED) {
-            fila.shift(); // Remove a que acabou
+            fila.shift();
             if (fila.length > 0) {
                 tocarVideo(fila[0].id);
             } else {
@@ -144,16 +147,41 @@
     }
 
     document.addEventListener('keydown', (e) => {
-        if (e.key === "Enter") { creditos++; musicasRestantes += 5; document.getElementById('val-creditos').innerText = creditos; }
+        // SOM DE FICHA (ENTER)
+        if (e.key === "Enter") { 
+            sndCoin.play();
+            creditos++; 
+            musicasRestantes += 5; 
+            document.getElementById('val-creditos').innerText = creditos; 
+        }
+
+        // SOM DE MOVIMENTO (SETAS)
+        if (["ArrowRight", "ArrowLeft", "ArrowUp", "ArrowDown"].includes(e.key)) {
+            sndMove.currentTime = 0;
+            sndMove.play();
+        }
+
         if (e.key === "ArrowRight") { focoP = (focoP + 1) % generos.length; onValue(ref(db, 'jukebox'), () => {}); }
         if (e.key === "ArrowLeft") { focoP = (focoP - 1 + generos.length) % generos.length; onValue(ref(db, 'jukebox'), () => {}); }
-        if (e.code === "Space") { e.preventDefault(); pastaAtiva = generos[focoP]; focoM = 0; renderRoleta(); }
+        
+        // SOM DE SELEÇÃO (ESPAÇO)
+        if (e.code === "Space") { 
+            e.preventDefault(); 
+            sndSelect.play();
+            pastaAtiva = generos[focoP]; 
+            focoM = 0; 
+            renderRoleta(); 
+        }
         
         if (pastaAtiva) {
             const lista = Object.values(dbDados[pastaAtiva]);
             if (e.key === "ArrowDown") { focoM = (focoM + 1) % lista.length; renderRoleta(); }
             if (e.key === "ArrowUp") { focoM = (focoM - 1 + lista.length) % lista.length; renderRoleta(); }
+            
+            // SOM DE ESCOLHA DE MÚSICA (E)
             if (e.key.toUpperCase() === "E" && musicasRestantes > 0) {
+                sndSelect.currentTime = 0;
+                sndSelect.play();
                 fila.push({ id: lista[focoM].videoID });
                 musicasRestantes--;
                 if(musicasRestantes % 5 === 0 && creditos > 0) { creditos--; document.getElementById('val-creditos').innerText = creditos; }
