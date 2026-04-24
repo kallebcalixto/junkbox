@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <title>KBS TV | ROCKOLA ORIGINAL</title>
     <style>
-        /* VOLTEI O SEU CSS ORIGINAL */
         :root { --blue: #00d2ff; --pink: #ff007f; --bg: #000; }
         
         body { 
@@ -13,14 +12,15 @@
         }
 
         header { 
-            background: #111; padding: 15px 20px; display: flex; gap: 12px;
+            background: #111; padding: 12px 20px; display: flex; gap: 12px;
             border-bottom: 2px solid var(--blue); overflow-x: auto; align-items: center;
+            height: 60px; flex-shrink: 0;
         }
         
         .btn-gen {
             background: #222; border: 1px solid var(--blue); color: var(--blue);
-            padding: 10px 22px; border-radius: 30px; cursor: pointer; font-weight: bold;
-            white-space: nowrap; transition: 0.3s;
+            padding: 8px 20px; border-radius: 30px; cursor: pointer; font-weight: bold;
+            white-space: nowrap; transition: 0.3s; font-size: 14px;
         }
         
         .btn-gen:hover, .btn-gen.active {
@@ -30,16 +30,18 @@
         main {
             flex: 1; display: flex; flex-direction: column; align-items: center;
             justify-content: center; background: radial-gradient(circle, #1a1a1a 0%, #000 100%);
-            padding: 20px;
+            padding: 10px; overflow: hidden;
         }
 
+        /* PLAYER 10% MENOR E CENTRALIZADO */
         .tv-frame {
-            width: 90%; max-width: 850px; aspect-ratio: 16/9;
-            background: #000; border: 10px solid #222; border-radius: 15px;
-            box-shadow: 0 0 50px #000; overflow: hidden; transition: 0.4s;
+            width: 80%; max-width: 765px; /* Reduzido de 850px para 765px (10% menor) */
+            aspect-ratio: 16/9;
+            background: #000; border: 8px solid #222; border-radius: 12px;
+            box-shadow: 0 0 40px #000; overflow: hidden; transition: 0.4s;
+            flex-shrink: 0;
         }
 
-        /* Classe de Tela Cheia */
         .fullscreen-active {
             position: fixed; top: 0; left: 0; width: 100vw !important; height: 100vh !important;
             max-width: none !important; border: none; border-radius: 0; z-index: 999;
@@ -47,46 +49,50 @@
 
         iframe { width: 100%; height: 100%; border: none; }
 
+        /* LISTA (FOOTER) COM MAIS ESPAÇO */
         footer {
-            height: 220px; background: #0a0a0a; border-top: 1px solid #222;
-            display: flex; align-items: center; padding: 0 30px; overflow-x: auto;
+            height: 200px; background: #0a0a0a; border-top: 1px solid #222;
+            display: flex; align-items: center; padding: 0 20px; overflow-x: auto;
+            flex-shrink: 0;
         }
 
         .video-card {
-            min-width: 180px; margin-right: 20px; cursor: pointer;
+            min-width: 150px; margin-right: 20px; cursor: pointer;
             transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            background: #151515; border-radius: 10px; border: 1px solid #333;
-            overflow: visible; text-align: center; position: relative;
+            background: #151515; border-radius: 8px; border: 1px solid #333;
+            text-align: center; position: relative;
         }
 
+        /* EFEITO DE SUBIDA SEM TAMPAR O PLAYER */
         .video-card:hover, .video-card.foco-musica {
-            transform: translateY(-25px) scale(1.1);
+            transform: translateY(-20px) scale(1.05);
             border-color: var(--pink);
-            box-shadow: 0 15px 30px rgba(255, 0, 127, 0.4);
+            box-shadow: 0 10px 20px rgba(255, 0, 127, 0.4);
         }
 
-        .video-card img { width: 100%; display: block; border-radius: 8px; }
+        .video-card img { width: 100%; display: block; border-radius: 6px; }
 
         .video-card .balao-nome {
-            position: absolute; top: -50px; left: 50%; transform: translateX(-50%);
-            width: 100%; background: var(--blue); color: #000; padding: 5px;
+            position: absolute; top: -55px; left: 50%; transform: translateX(-50%);
+            width: 110%; background: var(--blue); color: #000; padding: 6px;
             border-radius: 5px; font-weight: bold; font-size: 11px; opacity: 0; transition: 0.3s;
+            pointer-events: none; z-index: 20; border: 1px solid #fff;
         }
-        .video-card.foco-musica .balao-nome { opacity: 1; top: -60px; }
+        .video-card.foco-musica .balao-nome { opacity: 1; top: -65px; }
 
-        .col-fila { position: fixed; right: 10px; top: 70px; width: 200px; bottom: 230px; background: rgba(0,0,0,0.8); border-left: 2px solid var(--pink); padding: 10px; overflow-y: auto; z-index: 50; }
-        .fila-item { margin-bottom: 5px; border-bottom: 1px solid #222; }
-        .fila-item img { width: 100%; border-radius: 4px; }
+        .col-fila { position: fixed; right: 10px; top: 80px; width: 180px; bottom: 220px; background: rgba(0,0,0,0.8); border-left: 2px solid var(--pink); padding: 8px; overflow-y: auto; z-index: 50; }
+        .fila-item { margin-bottom: 8px; border-bottom: 1px solid #222; }
+        .fila-item img { width: 100%; border-radius: 4px; opacity: 0.7; }
     </style>
 </head>
 <body>
 
 <header id="menu-pastas">
-    <div style="color:var(--blue); font-weight:bold; margin-right:20px;">KBS ROCKOLA</div>
+    <div style="color:var(--blue); font-weight:bold; margin-right:20px; font-size: 18px;">KBS ROCKOLA</div>
 </header>
 
 <main>
-    <div id="status-txt" style="color:var(--pink); margin-bottom:10px; font-weight:bold;">AGUARDANDO...</div>
+    <div id="status-txt" style="color:var(--pink); margin-bottom:8px; font-weight:bold; font-size: 14px;">ESCOLHA UMA PASTA</div>
     <div class="tv-frame" id="player-container">
         <div style="height:100%; display:flex; align-items:center; justify-content:center; color:#333;">KBS TV</div>
     </div>
@@ -95,7 +101,7 @@
 <div class="col-fila" id="container-fila"></div>
 
 <footer>
-    <div id="container-roleta" style="display:flex;"></div>
+    <div id="container-roleta" style="display:flex; align-items: center; height: 100%;"></div>
 </footer>
 
 <script type="module">
@@ -115,7 +121,6 @@
     let creditos = 0, musicasRestantes = 0, dbDados = {}, generos = [], focoP = 0, focoM = 0;
     let pastaAtiva = null, fila = [], tocando = false;
 
-    // Puxa as pastas organizadas
     onValue(ref(db, 'jukebox'), (snapshot) => {
         dbDados = snapshot.val() || {};
         generos = Object.keys(dbDados);
@@ -167,7 +172,7 @@
             const m = fila[0];
             const container = document.getElementById('player-container');
             container.classList.add('fullscreen-active');
-            container.innerHTML = `<iframe src="https://www.youtube.com/embed/${m.id}?autoplay=1&enablejsapi=1&controls=0" allow="autoplay"></iframe>`;
+            container.innerHTML = `<iframe src="https://www.youtube.com/embed/${m.id}?autoplay=1&enablejsapi=1&controls=0&rel=0" allow="autoplay"></iframe>`;
             
             window.addEventListener('message', function(event) {
                 try {
@@ -179,6 +184,7 @@
                             tocando = false; 
                             container.classList.remove('fullscreen-active'); 
                             container.innerHTML = ""; renderFila();
+                            document.getElementById('status-txt').innerText = "FIM DO SHOW";
                         }
                     }
                 } catch(e){}
@@ -187,7 +193,7 @@
     }
 
     document.addEventListener('keydown', (e) => {
-        if (e.key === "Enter") { creditos++; musicasRestantes += 5; document.getElementById('status-txt').innerText = "CREDITOS: " + musicasRestantes; }
+        if (e.key === "Enter") { creditos++; musicasRestantes += 5; document.getElementById('status-txt').innerText = "ESCOLHA " + musicasRestantes + " MÚSICAS"; }
         if (e.key === "ArrowRight") { focoP = (focoP + 1) % generos.length; renderPastas(); }
         if (e.key === "ArrowLeft") { focoP = (focoP - 1 + generos.length) % generos.length; renderPastas(); }
         if (e.code === "Space") { e.preventDefault(); pastaAtiva = generos[focoP]; focoM = 0; renderPastas(); renderRoleta(); }
@@ -200,6 +206,7 @@
                     const mus = listaMus[focoM];
                     fila.push({ id: mus.videoID, titulo: mus.titulo });
                     musicasRestantes--;
+                    document.getElementById('status-txt').innerText = "FALTAM " + musicasRestantes;
                     renderFila();
                     if (musicasRestantes === 0 && !tocando) iniciarMusica();
                 }
