@@ -2,43 +2,36 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>KBS TV | ROCKOLA PRO</title>
+    <title>KBS JUKEBOX | MODO PASTAS</title>
     <style>
         :root { --blue: #00d2ff; --pink: #ff007f; --bg: #050505; }
         body { background: var(--bg); color: #fff; font-family: 'Segoe UI', sans-serif; margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+        
         header { background: #111; padding: 10px 25px; display: flex; justify-content: space-between; border-bottom: 2px solid var(--blue); align-items: center; height: 50px; flex-shrink: 0; }
         .creditos { background: var(--pink); padding: 5px 15px; border-radius: 5px; font-size: 18px; font-weight: bold; }
-        #menu-pastas { display: flex; gap: 8px; padding: 10px; background: #151515; border-bottom: 1px solid #333; height: 45px; align-items: center; flex-shrink: 0; }
-        .pasta-item { padding: 5px 12px; background: #222; border-radius: 4px; border: 2px solid transparent; font-size: 13px; color: #777; }
+
+        #menu-pastas { display: flex; gap: 10px; padding: 10px; background: #151515; height: 45px; align-items: center; flex-shrink: 0; overflow-x: auto; }
+        .pasta-item { padding: 5px 15px; background: #222; border-radius: 4px; border: 2px solid transparent; font-size: 13px; color: #777; white-space: nowrap; }
         .pasta-item.foco { border-color: var(--blue); color: var(--blue); }
         .pasta-item.aberta { background: var(--blue); color: #000; font-weight: bold; }
+
         main { flex: 1; display: grid; grid-template-columns: 1fr 240px; gap: 20px; padding: 15px; overflow: hidden; }
-        .col-left { display: flex; flex-direction: column; height: 100%; align-items: center; overflow: hidden; }
+        .col-left { display: flex; flex-direction: column; height: 100%; align-items: center; }
+
         .tv-frame { width: 560px; height: 315px; background: #000; border: 5px solid #222; border-radius: 10px; overflow: hidden; flex-shrink: 0; transition: 0.4s; z-index: 100; }
-        .fullscreen-active { position: fixed; top: 0; left: 0; width: 100vw !important; height: 100vh !important; border: none; border-radius: 0; }
-        iframe { width: 100%; height: 100%; border: none; }
+        .fullscreen-active { position: fixed; top: 0; left: 0; width: 100vw !important; height: 100vh !important; z-index: 999; }
 
-        /* ROLETA COM NOME REAL */
-        #container-roleta { width: 100%; flex: 1; display: flex; align-items: center; gap: 25px; overflow-x: auto; padding: 60px 10px 10px 10px; background: #080808; }
-        .video-card { min-width: 160px; transition: 0.3s; background: #111; border-radius: 6px; border: 2px solid #333; position: relative; }
+        #container-roleta { width: 100%; flex: 1; display: flex; align-items: center; gap: 20px; overflow-x: auto; padding: 60px 10px 10px 10px; }
+        .video-card { min-width: 150px; transition: 0.3s; background: #111; border-radius: 6px; border: 2px solid #333; position: relative; }
         .video-card img { width: 100%; display: block; opacity: 0.4; }
+        .video-card .nome-musica { position: absolute; top: -65px; left: 50%; transform: translateX(-50%); width: 180px; background: var(--blue); color: #000; padding: 8px; border-radius: 6px; font-weight: bold; font-size: 11px; text-align: center; opacity: 0; transition: 0.3s; }
         
-        .video-card .balao-nome {
-            position: absolute; top: -60px; left: 50%; transform: translateX(-50%);
-            width: 190px; background: var(--blue); color: #000;
-            padding: 8px; border-radius: 6px; font-weight: 900; font-size: 11px;
-            text-align: center; text-transform: uppercase; opacity: 0; transition: 0.3s;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.5); pointer-events: none; border: 2px solid #fff;
-        }
-
         .video-card.foco-musica { transform: translateY(-10px); border-color: var(--pink); }
         .video-card.foco-musica img { opacity: 1; }
-        .video-card.foco-musica .balao-nome { opacity: 1; top: -75px; }
+        .video-card.foco-musica .nome-musica { opacity: 1; }
 
-        /* FILA COM FOTOS PEQUENAS */
-        .col-fila { background: #0f0f0f; border-radius: 8px; padding: 10px; border: 1px solid #222; overflow-y: auto; }
-        .fila-card { width: 100%; margin-bottom: 8px; border-radius: 5px; overflow: hidden; border: 2px solid #333; opacity: 0.8; }
-        .fila-card.atual { border-color: var(--blue); opacity: 1; border-width: 3px; }
+        .col-fila { background: #0f0f0f; border-radius: 8px; padding: 10px; border: 1px solid #222; }
+        .fila-card { width: 100%; margin-bottom: 8px; border-radius: 5px; overflow: hidden; border: 2px solid #333; }
         .fila-card img { width: 100%; display: block; }
     </style>
 </head>
@@ -46,7 +39,7 @@
 
 <header>
     <div style="font-weight: bold; color: var(--blue);">KBS TV - ROCKOLA</div>
-    <div id="status-txt" style="color:var(--pink); font-size: 13px; font-weight: bold;">AGUARDANDO...</div>
+    <div id="status-txt" style="color:var(--pink); font-size: 12px; font-weight: bold;">AGUARDANDO...</div>
     <div class="creditos">CRÉDITOS: <span id="val-creditos">0</span></div>
 </header>
 
@@ -77,13 +70,9 @@
     let creditos = 0, musicasRestantes = 0, dbDados = {}, generos = [], focoP = 0, focoM = 0;
     let pastaAtiva = null, fila = [], tocando = false;
 
-    onValue(ref(db, 'musicas'), (snapshot) => {
-        dbDados = {};
-        snapshot.forEach(c => {
-            const m = c.val();
-            if(!dbDados[m.genero]) dbDados[m.genero] = [];
-            dbDados[m.genero].push(m);
-        });
+    // Carrega a Jukebox separada por pastas
+    onValue(ref(db, 'jukebox'), (snapshot) => {
+        dbDados = snapshot.val() || {};
         generos = Object.keys(dbDados);
         renderPastas();
     });
@@ -94,7 +83,7 @@
         generos.forEach((g, i) => {
             const div = document.createElement('div');
             div.className = `pasta-item ${i === focoP ? 'foco' : ''} ${g === pastaAtiva ? 'aberta' : ''}`;
-            div.innerText = g;
+            div.innerText = "📁 " + g;
             menu.appendChild(div);
         });
     }
@@ -102,12 +91,14 @@
     function renderRoleta() {
         const cont = document.getElementById('container-roleta');
         cont.innerHTML = "";
-        if(!pastaAtiva) return;
-        dbDados[pastaAtiva].forEach((m, i) => {
+        if(!pastaAtiva || !dbDados[pastaAtiva]) return;
+        
+        const musicas = Object.values(dbDados[pastaAtiva]);
+        musicas.forEach((m, i) => {
             const card = document.createElement('div');
             card.className = `video-card ${i === focoM ? 'foco-musica' : ''}`;
             card.innerHTML = `
-                <div class="balao-nome">${m.titulo}</div>
+                <div class="nome-musica">${m.titulo}</div>
                 <img src="https://img.youtube.com/vi/${m.videoID}/mqdefault.jpg">
             `;
             cont.appendChild(card);
@@ -120,7 +111,7 @@
         cont.innerHTML = "";
         fila.forEach((m, i) => {
             const div = document.createElement('div');
-            div.className = `fila-card ${i === 0 && tocando ? 'atual' : ''}`;
+            div.className = "fila-card";
             div.innerHTML = `<img src="https://img.youtube.com/vi/${m.id}/mqdefault.jpg">`;
             cont.appendChild(div);
         });
@@ -133,8 +124,7 @@
             const container = document.getElementById('player-container');
             container.classList.add('fullscreen-active');
             container.innerHTML = `<iframe src="https://www.youtube.com/embed/${m.id}?autoplay=1&enablejsapi=1&controls=0&rel=0" allow="autoplay"></iframe>`;
-            renderFila();
-
+            
             window.addEventListener('message', function(event) {
                 try {
                     const data = JSON.parse(event.data);
@@ -157,20 +147,28 @@
         if (e.key === "Enter") { creditos++; musicasRestantes += 5; document.getElementById('val-creditos').innerText = creditos; }
         if (e.key === "ArrowRight") { focoP = (focoP + 1) % generos.length; renderPastas(); }
         if (e.key === "ArrowLeft") { focoP = (focoP - 1 + generos.length) % generos.length; renderPastas(); }
-        if (e.code === "Space") { e.preventDefault(); pastaAtiva = generos[focoP]; focoM = 0; renderPastas(); renderRoleta(); }
-        if (pastaAtiva) {
-            if (e.key === "ArrowDown") { focoM = (focoM + 1) % dbDados[pastaAtiva].length; renderRoleta(); }
-            if (e.key === "ArrowUp") { focoM = (focoM - 1 + dbDados[pastaAtiva].length) % dbDados[pastaAtiva].length; renderRoleta(); }
+        if (e.code === "Space") { 
+            e.preventDefault(); 
+            pastaAtiva = generos[focoP]; 
+            focoM = 0; 
+            renderPastas(); 
+            renderRoleta(); 
         }
-        if (e.key.toUpperCase() === "E") {
-            if (musicasRestantes > 0 && pastaAtiva) {
-                const mus = dbDados[pastaAtiva][focoM];
-                fila.push({ id: mus.videoID, titulo: mus.titulo });
-                musicasRestantes--;
-                if(musicasRestantes % 5 === 0 && creditos > 0) creditos--;
-                document.getElementById('val-creditos').innerText = creditos;
-                renderFila();
-                if (musicasRestantes === 0 && !tocando) iniciarMusica();
+        if (pastaAtiva) {
+            const listaMusicas = Object.values(dbDados[pastaAtiva]);
+            if (e.key === "ArrowDown") { focoM = (focoM + 1) % listaMusicas.length; renderRoleta(); }
+            if (e.key === "ArrowUp") { focoM = (focoM - 1 + listaMusicas.length) % listaMusicas.length; renderRoleta(); }
+            
+            if (e.key.toUpperCase() === "E") {
+                if (musicasRestantes > 0) {
+                    const mus = listaMusicas[focoM];
+                    fila.push({ id: mus.videoID, titulo: mus.titulo });
+                    musicasRestantes--;
+                    if(musicasRestantes % 5 === 0 && creditos > 0) creditos--;
+                    document.getElementById('val-creditos').innerText = creditos;
+                    renderFila();
+                    if (musicasRestantes === 0 && !tocando) iniciarMusica();
+                }
             }
         }
     });
