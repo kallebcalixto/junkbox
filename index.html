@@ -2,169 +2,117 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>KBS TV | ROCKOLA MP3 + FOTOS</title>
+    <title>KBS ROCKOLA | MP3 FINAL</title>
     <style>
         :root { --blue: #00d2ff; --pink: #ff007f; --bg: #000; }
         body { background: var(--bg); color: #fff; font-family: sans-serif; margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
         header { background: #111; padding: 0 20px; display: flex; justify-content: space-between; border-bottom: 2px solid var(--blue); align-items: center; height: 65px; flex-shrink: 0; }
-        .nav-pastas { display: flex; gap: 8px; overflow-x: auto; flex: 1; margin-right: 15px; }
+        .nav-pastas { display: flex; gap: 8px; overflow-x: auto; flex: 1; }
         .btn-gen { background: #222; border: 1px solid var(--blue); color: var(--blue); padding: 8px 15px; border-radius: 20px; cursor: pointer; white-space: nowrap; font-size: 13px; font-weight: bold; }
         .btn-gen.active { background: var(--blue); color: #000; box-shadow: 0 0 10px var(--blue); }
-        .display-creditos { background: var(--pink); color: #fff; padding: 10px 18px; border-radius: 8px; font-weight: 900; font-size: 18px; box-shadow: 0 0 15px var(--pink); }
-        
-        main { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; background: radial-gradient(circle, #1a1a1a 0%, #000 100%); }
-        .tv-frame { width: 70%; max-width: 700px; aspect-ratio: 16/9; background: #000; border: 6px solid #222; border-radius: 12px; overflow: hidden; flex-shrink: 0; display: flex; align-items: center; justify-content: center; position: relative; }
-        .fullscreen-active { position: fixed !important; top: 0 !important; left: 0 !important; width: 100vw !important; height: 100vh !important; z-index: 9999 !important; border: none !important; border-radius: 0 !important; }
-        
-        /* Capa no Player */
-        .main-cover { width: 350px; height: 350px; object-fit: cover; border-radius: 10px; border: 5px solid var(--blue); display: none; box-shadow: 0 0 30px var(--blue); }
-
-        footer { height: 210px; background: #0a0a0a; border-top: 1px solid #222; display: flex; align-items: center; padding: 0 15px; overflow-x: auto; flex-shrink: 0; }
-        .video-card { min-width: 135px; margin-right: 15px; transition: 0.3s; background: #151515; border-radius: 8px; border: 2px solid #333; position: relative; padding-bottom: 40px; height: 150px; }
-        .video-card.foco-musica { transform: translateY(-15px) scale(1.05); border-color: var(--pink); }
-        .video-card img { width: 100%; height: 110px; object-fit: cover; border-radius: 6px 6px 0 0; opacity: 0.4; }
+        .display-creditos { background: var(--pink); color: #fff; padding: 10px 18px; border-radius: 8px; font-weight: 900; font-size: 18px; }
+        main { flex: 1; display: flex; align-items: center; justify-content: center; background: radial-gradient(circle, #1a1a1a 0%, #000 100%); position: relative; }
+        .tv-frame { width: 70%; max-width: 700px; aspect-ratio: 16/9; background: #000; border: 6px solid #222; border-radius: 12px; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+        .fullscreen-active { position: fixed !important; top: 0; left: 0; width: 100vw !important; height: 100vh !important; z-index: 9999; border: none; }
+        .main-cover { width: 350px; height: 350px; object-fit: cover; border: 5px solid var(--blue); box-shadow: 0 0 40px var(--blue); display: none; }
+        footer { height: 210px; background: #0a0a0a; border-top: 1px solid #222; display: flex; align-items: center; padding: 0 15px; overflow-x: auto; }
+        .video-card { min-width: 140px; margin-right: 15px; transition: 0.3s; background: #151515; border-radius: 8px; border: 2px solid #333; position: relative; padding-bottom: 40px; height: 160px; }
+        .video-card.foco-musica { transform: translateY(-10px); border-color: var(--pink); }
+        .video-card img { width: 100%; height: 120px; object-fit: cover; opacity: 0.4; }
         .video-card.foco-musica img { opacity: 1; }
-        
-        .info-txt { position: absolute; bottom: 0; left: 0; width: 100%; height: 40px; background: #222; color: #fff; font-size: 10px; font-weight: bold; text-align: center; display: flex; align-items: center; justify-content: center; text-transform: uppercase; border-radius: 0 0 6px 6px; padding: 2px; box-sizing: border-box; }
+        .info-txt { position: absolute; bottom: 0; width: 100%; height: 40px; background: #222; color: #fff; font-size: 10px; font-weight: bold; text-align: center; display: flex; align-items: center; justify-content: center; text-transform: uppercase; }
         .video-card.foco-musica .info-txt { background: var(--blue); color: #000; }
-        
-        .col-fila { position: fixed; right: 10px; top: 85px; width: 140px; bottom: 230px; border-left: 2px solid var(--pink); padding: 5px; background: rgba(0,0,0,0.5); overflow-y: auto; z-index: 10; }
-        .fila-item img { width: 100%; height: 80px; object-fit: cover; border-radius: 4px; margin-bottom: 5px; }
     </style>
 </head>
 <body>
+    <header><div class="nav-pastas" id="menu-pastas"></div><div class="display-creditos">CRÉDITOS: <span id="val-creditos">0</span></div></header>
+    <main>
+        <div class="tv-frame" id="player-container">
+            <img id="capa-player" class="main-cover">
+            <audio id="audio-player"></audio>
+        </div>
+    </main>
+    <footer><div id="container-roleta" style="display:flex; align-items: center;"></div></footer>
 
-<header>
-    <div class="nav-pastas" id="menu-pastas"></div>
-    <div class="display-creditos">CRÉDITOS: <span id="val-creditos">0</span></div>
-</header>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.0.0/firebase-app.js";
+        import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/9.0.0/firebase-database.js";
 
-<main>
-    <div id="status-txt" style="color:var(--pink); font-weight:bold; margin-bottom:10px; text-transform: uppercase;">Aguardando Seleção...</div>
-    <div class="tv-frame" id="player-container">
-        <img src="" class="main-cover" id="capa-player">
-        <audio id="audio-player"></audio>
-    </div>
-</main>
+        const firebaseConfig = { databaseURL: "https://junck-3b41b-default-rtdb.firebaseio.com" };
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
 
-<div class="col-fila" id="container-fila"></div>
+        let creditos = 0, musicasRestantes = 0, dbDados = {}, generos = [], focoP = 0, focoM = 0;
+        let pastaAtiva = null, fila = [], tocando = false;
 
-<footer><div id="container-roleta" style="display:flex; align-items: center;"></div></footer>
+        const audio = document.getElementById('audio-player');
+        const capa = document.getElementById('capa-player');
 
-<script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.0.0/firebase-app.js";
-    import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/9.0.0/firebase-database.js";
+        audio.onended = () => {
+            fila.shift();
+            if (fila.length > 0) tocar(fila[0]);
+            else { 
+                tocando = false; 
+                document.getElementById('player-container').classList.remove('fullscreen-active'); 
+                capa.style.display = "none"; 
+            }
+        };
 
-    const firebaseConfig = { databaseURL: "https://junck-3b41b-default-rtdb.firebaseio.com" };
-    const app = initializeApp(firebaseConfig);
-    const db = getDatabase(app);
-
-    let creditos = 0, musicasRestantes = 0, dbDados = {}, generos = [], focoP = 0, focoM = 0;
-    let pastaAtiva = null, fila = [], tocando = false;
-
-    const audioPlayer = document.getElementById('audio-player');
-    const capaPlayer = document.getElementById('capa-player');
-    
-    const sndCoin = new Audio('https://www.myinstants.com/media/sounds/insert-coin_5Y5vC2C.mp3');
-    const sndMove = new Audio('https://www.myinstants.com/media/sounds/move_SOnpG4M.mp3');
-    const sndSelect = new Audio('https://www.myinstants.com/media/sounds/select_MSu2Cof.mp3');
-
-    audioPlayer.onended = () => {
-        fila.shift();
-        if (fila.length > 0) {
-            tocarMusica(fila[0]);
-        } else {
-            tocando = false;
-            document.getElementById('player-container').classList.remove('fullscreen-active');
-            capaPlayer.style.display = "none";
-            document.getElementById('status-txt').innerText = "KBS TV - PRONTA";
-            renderFilaVisual();
-        }
-    };
-
-    function tocarMusica(musica) {
-        tocando = true;
-        document.getElementById('player-container').classList.add('fullscreen-active');
-        capaPlayer.src = musica.capa;
-        capaPlayer.style.display = "block";
-        audioPlayer.src = musica.url;
-        audioPlayer.play();
-        renderFilaVisual();
-    }
-
-    onValue(ref(db, 'jukebox'), (snap) => {
-        dbDados = snap.val() || {};
-        generos = Object.keys(dbDados);
-        const menu = document.getElementById('menu-pastas');
-        menu.innerHTML = "";
-        generos.forEach((g, i) => {
-            const btn = document.createElement('div');
-            btn.className = `btn-gen ${i === focoP ? 'active' : ''}`;
-            btn.innerText = g;
-            menu.appendChild(btn);
-        });
-        if (pastaAtiva) renderRoleta();
-    });
-
-    function renderRoleta() {
-        const cont = document.getElementById('container-roleta');
-        cont.innerHTML = ""; 
-        if(!pastaAtiva || !dbDados[pastaAtiva]) return;
-        const musicas = Object.values(dbDados[pastaAtiva]);
-        musicas.forEach((m, i) => {
-            const card = document.createElement('div');
-            card.className = `video-card ${i === focoM ? 'foco-musica' : ''}`;
-            card.innerHTML = `<img src="${m.capaUrl}"><div class="info-txt">${m.titulo}</div>`;
-            cont.appendChild(card);
-            if(i === focoM) card.scrollIntoView({ behavior: 'smooth', inline: 'center' });
-        });
-    }
-
-    function renderFilaVisual() {
-        const cont = document.getElementById('container-fila');
-        cont.innerHTML = "";
-        fila.forEach(m => {
-            const item = document.createElement('div');
-            item.innerHTML = `<div class="fila-item"><img src="${m.capa}"></div>`;
-            cont.appendChild(item);
-        });
-    }
-
-    document.addEventListener('keydown', (e) => {
-        if (e.key === "Enter") { 
-            sndCoin.play();
-            creditos++; musicasRestantes += 5; 
-            document.getElementById('val-creditos').innerText = creditos; 
-            document.getElementById('status-txt').innerText = "ESCOLHA " + musicasRestantes + " MÚSICAS";
+        function tocar(m) {
+            tocando = true;
+            document.getElementById('player-container').classList.add('fullscreen-active');
+            capa.src = m.capaUrl;
+            capa.style.display = "block";
+            audio.src = m.mp3Url;
+            audio.play().catch(e => console.log("Erro ao tocar áudio"));
         }
 
-        if (["ArrowRight", "ArrowLeft", "ArrowUp", "ArrowDown"].includes(e.key)) {
-            sndMove.currentTime = 0; sndMove.play();
+        onValue(ref(db, 'jukebox'), (snap) => {
+            dbDados = snap.val() || {};
+            generos = Object.keys(dbDados);
+            const menu = document.getElementById('menu-pastas');
+            menu.innerHTML = "";
+            generos.forEach((g, i) => {
+                const btn = document.createElement('div');
+                btn.className = `btn-gen ${i === focoP ? 'active' : ''}`;
+                btn.innerText = g;
+                menu.appendChild(btn);
+            });
+            if (pastaAtiva) renderRoleta();
+        });
+
+        function renderRoleta() {
+            const cont = document.getElementById('container-roleta');
+            cont.innerHTML = "";
+            if(!pastaAtiva || !dbDados[pastaAtiva]) return;
+            const musicas = Object.values(dbDados[pastaAtiva]);
+            musicas.forEach((m, i) => {
+                const card = document.createElement('div');
+                card.className = `video-card ${i === focoM ? 'foco-musica' : ''}`;
+                card.innerHTML = `<img src="${m.capaUrl}"><div class="info-txt">${m.titulo}</div>`;
+                cont.appendChild(card);
+                if(i === focoM) card.scrollIntoView({ behavior: 'smooth', inline: 'center' });
+            });
         }
 
-        if (e.key === "ArrowRight") { focoP = (focoP + 1) % generos.length; }
-        if (e.key === "ArrowLeft") { focoP = (focoP - 1 + generos.length) % generos.length; }
-        if (e.code === "Space") { e.preventDefault(); sndSelect.play(); pastaAtiva = generos[focoP]; focoM = 0; renderRoleta(); }
-        
-        if (pastaAtiva) {
-            const lista = Object.values(dbDados[pastaAtiva]);
-            if (e.key === "ArrowDown") { focoM = (focoM + 1) % lista.length; renderRoleta(); }
-            if (e.key === "ArrowUp") { focoM = (focoM - 1 + lista.length) % lista.length; renderRoleta(); }
+        document.addEventListener('keydown', (e) => {
+            if (e.key === "Enter") { creditos++; musicasRestantes += 5; document.getElementById('val-creditos').innerText = creditos; }
+            if (e.key === "ArrowRight") { focoP = (focoP + 1) % generos.length; }
+            if (e.key === "ArrowLeft") { focoP = (focoP - 1 + generos.length) % generos.length; }
+            if (e.code === "Space") { e.preventDefault(); pastaAtiva = generos[focoP]; focoM = 0; renderRoleta(); }
             
-            if (e.key.toUpperCase() === "E" && musicasRestantes > 0) {
-                sndSelect.play();
-                fila.push({ url: lista[focoM].mp3Url, capa: lista[focoM].capaUrl });
-                musicasRestantes--;
-                if(musicasRestantes % 5 === 0 && creditos > 0) { creditos--; document.getElementById('val-creditos').innerText = creditos; }
-                document.getElementById('status-txt').innerText = "FALTAM: " + musicasRestantes;
-                renderFilaVisual();
-
-                if (musicasRestantes === 0 && !tocando) {
-                    tocarMusica(fila[0]);
+            if (pastaAtiva) {
+                const lista = Object.values(dbDados[pastaAtiva]);
+                if (e.key === "ArrowDown") { focoM = (focoM + 1) % lista.length; renderRoleta(); }
+                if (e.key === "ArrowUp") { focoM = (focoM - 1 + lista.length) % lista.length; renderRoleta(); }
+                if (e.key.toUpperCase() === "E" && musicasRestantes > 0) {
+                    fila.push(lista[focoM]);
+                    musicasRestantes--;
+                    if(musicasRestantes % 5 === 0 && creditos > 0) { creditos--; document.getElementById('val-creditos').innerText = creditos; }
+                    if (!tocando) tocar(fila[0]);
                 }
             }
-        }
-    });
-</script>
+        });
+    </script>
 </body>
 </html>
