@@ -6,73 +6,30 @@
 
 <style>
 :root { --blue: #00d2ff; --pink: #ff007f; --bg: #000; }
+body { background: var(--bg); color: #fff; font-family: sans-serif; margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
 
-body {
-    background: var(--bg);
-    color: #fff;
-    font-family: sans-serif;
-    margin: 0;
-    display: flex;
-    flex-direction: column;
-    height: 100vh;
-    overflow: hidden;
+header { 
+    background: #111; padding: 0 20px; display: flex; justify-content: space-between;
+    border-bottom: 2px solid var(--blue); align-items: center; height: 65px;
 }
-
-header {
-    background: #111;
-    padding: 0 20px;
-    display: flex;
-    justify-content: space-between;
-    border-bottom: 2px solid var(--blue);
-    align-items: center;
-    height: 65px;
-}
-
 .nav-pastas { display: flex; gap: 8px; overflow-x: auto; flex: 1; }
+.btn-gen { background: #222; border: 1px solid var(--blue); color: var(--blue); padding: 8px 15px; border-radius: 20px; cursor: pointer; }
+.btn-gen.active { background: var(--blue); color: #000; }
 
-.btn-gen {
-    background: #222;
-    border: 1px solid var(--blue);
-    color: var(--blue);
-    padding: 8px 15px;
-    border-radius: 20px;
-    cursor: pointer;
-}
+.display-creditos { background: var(--pink); padding: 10px; font-weight: bold; }
 
-.btn-gen.active {
-    background: var(--blue);
-    color: #000;
-}
+main { flex: 1; display: flex; align-items: center; justify-content: center; }
 
-.display-creditos {
-    background: var(--pink);
-    padding: 10px;
-    font-weight: bold;
-}
+.tv-frame { width: 70%; max-width: 700px; aspect-ratio: 16/9; background: #000; }
 
-main {
-    flex: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.tv-frame {
-    width: 70%;
-    max-width: 700px;
-    aspect-ratio: 16/9;
-    background: #000;
-}
-
-.fullscreen-active {
-    position: fixed;
-    top:0; left:0;
-    width:100vw;
-    height:100vh;
-    z-index:9999;
-}
+.fullscreen-active { position: fixed; top:0; left:0; width:100vw; height:100vh; z-index:9999; }
 
 #yt-player { width:100%; height:100%; }
+
+footer { height: 200px; overflow-x: auto; display:flex; align-items:center; }
+.video-card { min-width: 120px; margin: 10px; border: 2px solid #333; }
+.video-card.foco-musica { border-color: var(--pink); }
+.video-card img { width:100%; }
 </style>
 </head>
 
@@ -90,6 +47,10 @@ main {
 </div>
 </main>
 
+<footer>
+<div id="container-roleta" style="display:flex;"></div>
+</footer>
+
 <script src="https://www.youtube.com/iframe_api"></script>
 
 <script type="module">
@@ -104,46 +65,42 @@ const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
 let player;
-let playerReady = false;
-let fila = [];
-let tocando = false;
+let ready = false;
+
+let creditos = 0;
+let musicasRestantes = 0;
+
 let dbDados = {};
 let generos = [];
 
+let focoP = 0;
+let focoM = 0;
 
-// 🔵 PLAYER YOUTUBE
+let pastaAtiva = null;
+let fila = [];
+let tocando = false;
+
+
+// 🔵 YOUTUBE
 window.onYouTubeIframeAPIReady = function() {
     player = new YT.Player('yt-player', {
         height: '100%',
         width: '100%',
-        playerVars: {
-            autoplay: 1,
-            controls: 0
-        },
+        playerVars: { autoplay: 1 },
         events: {
-            onReady: () => {
-                playerReady = true;
-                console.log("Player pronto");
-            },
+            onReady: () => ready = true,
             onStateChange: onPlayerStateChange,
-            onError: (e) => {
-                console.log("Erro vídeo:", e.data);
-                proximoVideo();
-            }
+            onError: () => proximoVideo()
         }
     });
 };
 
-
-// 🔵 QUANDO VÍDEO TERMINA
-function onPlayerStateChange(event) {
-    if (event.data === YT.PlayerState.ENDED) {
+function onPlayerStateChange(e) {
+    if (e.data === YT.PlayerState.ENDED) {
         proximoVideo();
     }
 }
 
-
-// 🔵 PRÓXIMO DA FILA
 function proximoVideo() {
     fila.shift();
 
@@ -152,25 +109,24 @@ function proximoVideo() {
     } else {
         tocando = false;
         document.getElementById("status").innerText = "PRONTA";
+        document.getElementById('player-container').classList.remove('fullscreen-active');
     }
 }
 
-
-// 🔵 TOCAR
 function tocarVideo(id) {
-    if (!playerReady) return;
+    if (!ready) return;
 
     tocando = true;
 
     player.loadVideoById(id);
-    player.mute(); // evita bloqueio autoplay
+    player.mute(); // garante autoplay
 
     document.getElementById('player-container')
         .classList.add('fullscreen-active');
 }
 
 
-// 🔵 FIREBASE (UM ÚNICO LISTENER)
+// 🔵 FIREBASE
 onValue(ref(db, 'jukebox'), (snap) => {
     dbDados = snap.val() || {};
     generos = Object.keys(dbDados);
@@ -178,29 +134,87 @@ onValue(ref(db, 'jukebox'), (snap) => {
     const menu = document.getElementById('menu-pastas');
     menu.innerHTML = "";
 
-    generos.forEach(g => {
+    generos.forEach((g, i) => {
         const btn = document.createElement('div');
-        btn.className = "btn-gen";
+        btn.className = `btn-gen ${i === focoP ? 'active' : ''}`;
         btn.innerText = g;
-
-        btn.onclick = () => {
-            const lista = Object.values(dbDados[g]);
-
-            if (!lista.length) return;
-
-            const random = lista[Math.floor(Math.random() * lista.length)];
-
-            fila.push(random.videoID);
-
-            if (!tocando) {
-                tocarVideo(fila[0]);
-            }
-        };
-
         menu.appendChild(btn);
     });
+
+    renderRoleta();
 });
 
+
+// 🔵 ROLETA
+function renderRoleta() {
+    const cont = document.getElementById('container-roleta');
+    cont.innerHTML = "";
+
+    if (!pastaAtiva) return;
+
+    const lista = Object.values(dbDados[pastaAtiva]);
+
+    lista.forEach((m, i) => {
+        const card = document.createElement('div');
+        card.className = `video-card ${i === focoM ? 'foco-musica' : ''}`;
+        card.innerHTML = `<img src="https://img.youtube.com/vi/${m.videoID}/mqdefault.jpg">`;
+        cont.appendChild(card);
+    });
+}
+
+
+// 🔵 CONTROLES
+document.addEventListener('keydown', (e) => {
+
+    // 💰 CRÉDITOS
+    if (e.key === "Enter") {
+        creditos++;
+        musicasRestantes += 5;
+        document.getElementById('val-creditos').innerText = creditos;
+    }
+
+    if (!generos.length) return;
+
+    if (e.key === "ArrowRight") {
+        focoP = (focoP + 1) % generos.length;
+    }
+
+    if (e.key === "ArrowLeft") {
+        focoP = (focoP - 1 + generos.length) % generos.length;
+    }
+
+    if (e.code === "Space") {
+        e.preventDefault();
+        pastaAtiva = generos[focoP];
+        focoM = 0;
+        renderRoleta();
+    }
+
+    if (!pastaAtiva) return;
+
+    const lista = Object.values(dbDados[pastaAtiva]);
+
+    if (e.key === "ArrowDown") {
+        focoM = (focoM + 1) % lista.length;
+        renderRoleta();
+    }
+
+    if (e.key === "ArrowUp") {
+        focoM = (focoM - 1 + lista.length) % lista.length;
+        renderRoleta();
+    }
+
+    if (e.key.toUpperCase() === "E" && musicasRestantes > 0) {
+
+        fila.push(lista[focoM].videoID);
+        musicasRestantes--;
+
+        if (musicasRestantes === 0 && !tocando) {
+            tocarVideo(fila[0]);
+        }
+    }
+
+});
 </script>
 
 </body>
