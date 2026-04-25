@@ -1,206 +1,187 @@
-<!DOCTYPE html>
-<html lang="pt-br">
-<head>
-<meta charset="UTF-8">
-<title>KBS TV</title>
-
-<style>
-:root { --blue:#00d2ff; --pink:#ff007f; --bg:#000; }
-body { background:#000; color:#fff; margin:0; display:flex; flex-direction:column; height:100vh; overflow:hidden; }
-
-header { background:#111; padding:10px; display:flex; justify-content:space-between; border-bottom:2px solid var(--blue); }
-.nav-pastas { display:flex; gap:5px; overflow:auto; }
-.btn-gen { padding:6px 10px; border:1px solid var(--blue); cursor:pointer; }
-.btn-gen.active { background:var(--blue); color:#000; }
-
-main { flex:1; display:flex; justify-content:center; align-items:center; }
-.tv-frame { width:70%; aspect-ratio:16/9; background:#000; }
-.fullscreen-active { position:fixed; top:0; left:0; width:100vw; height:100vh; }
-
-footer { height:200px; display:flex; overflow-x:auto; }
-
-.video-card { min-width:130px; margin:5px; border:2px solid #333; }
-.video-card.foco-musica { border-color:var(--pink); }
-
-.col-fila { position:fixed; right:0; top:80px; bottom:200px; width:140px; overflow:auto; }
-.fila-item img { width:100%; }
-</style>
-</head>
-
-<body>
-
-<header>
-<div class="nav-pastas" id="menu"></div>
-<div>CRÉDITOS: <span id="cred">0</span></div>
-</header>
-
-<main>
-<div class="tv-frame" id="player-box">
-<div id="yt-player"></div>
-</div>
-</main>
-
-<div class="col-fila" id="fila"></div>
-
-<footer id="roleta"></footer>
-
-<script src="https://www.youtube.com/iframe_api"></script>
-
 <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/9.0.0/firebase-app.js";
+import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/9.0.0/firebase-database.js";
 
-const app = initializeApp({ databaseURL:"https://junck-3b41b-default-rtdb.firebaseio.com" });
+const firebaseConfig = { databaseURL: "https://junck-3b41b-default-rtdb.firebaseio.com" };
+const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
-let player, ready=false;
-let dbDados={}, generos=[];
-let focoP=0, focoM=0, pasta=null;
-let fila=[], tocando=false;
-let creditos=0, restantes=0;
+let player, playerReady = false;
+let creditos = 0, musicasRestantes = 0;
+let dbDados = {}, generos = [], focoP = 0, focoM = 0;
+let pastaAtiva = null, fila = [], tocando = false;
 
 
-// PLAYER
-window.onYouTubeIframeAPIReady=()=>{
-    player=new YT.Player('yt-player',{
-        events:{
-            onReady:()=> ready=true,
-            onStateChange:e=>{
-                if(e.data===YT.PlayerState.ENDED) next();
-            },
-            onError:()=> next()
+// 🔥 PLAYER CORRIGIDO
+window.onYouTubeIframeAPIReady = function() {
+    player = new YT.Player('yt-player', {
+        events: {
+            'onReady': () => playerReady = true,
+            'onStateChange': onPlayerStateChange,
+            'onError': () => proximoVideo()
         }
     });
 };
 
 
-// TOCAR
-function play(id){
-    if(!ready){
-        setTimeout(()=>play(id),300);
+// 🔥 CONTROLE DE FIM
+function onPlayerStateChange(event) {
+    if (event.data === YT.PlayerState.ENDED) {
+        proximoVideo();
+    }
+}
+
+
+// 🔥 PRÓXIMO
+function proximoVideo() {
+    fila.shift();
+
+    if (fila.length > 0) {
+        tocarVideo(fila[0].id);
+    } else {
+        tocando = false;
+        document.getElementById('player-container').classList.remove('fullscreen-active');
+        document.getElementById('status-txt').innerText = "KBS TV - PRONTA";
+    }
+
+    renderFilaVisual();
+}
+
+
+// 🔥 TOCAR (AGORA FUNCIONA SEMPRE)
+function tocarVideo(id) {
+    if (!playerReady) {
+        setTimeout(() => tocarVideo(id), 300);
         return;
     }
 
-    tocando=true;
+    tocando = true;
+
+    const container = document.getElementById('player-container');
+    container.classList.add('fullscreen-active');
+
     player.loadVideoById(id);
-    player.mute();
+    player.mute(); // 🔥 ESSENCIAL
 
-    document.getElementById('player-box').classList.add('fullscreen-active');
-    renderFila();
+    renderFilaVisual();
 }
 
 
-// PROXIMO
-function next(){
-    fila.shift();
+// 🔥 FIREBASE (SEM BUG)
+onValue(ref(db, 'jukebox'), (snap) => {
+    dbDados = snap.val() || {};
+    generos = Object.keys(dbDados);
 
-    if(fila.length){
-        play(fila[0].id);
-    } else {
-        tocando=false;
-        document.getElementById('player-box').classList.remove('fullscreen-active');
-    }
+    const menu = document.getElementById('menu-pastas');
+    menu.innerHTML = "";
 
-    renderFila();
-}
-
-
-// FIREBASE
-onValue(ref(db,'jukebox'),snap=>{
-    dbDados=snap.val()||{};
-    generos=Object.keys(dbDados);
-
-    const menu=document.getElementById('menu');
-    menu.innerHTML="";
-
-    generos.forEach((g,i)=>{
-        const b=document.createElement('div');
-        b.className=`btn-gen ${i===focoP?'active':''}`;
-        b.innerText=g;
-        menu.appendChild(b);
+    generos.forEach((g, i) => {
+        const btn = document.createElement('div');
+        btn.className = `btn-gen ${i === focoP ? 'active' : ''}`;
+        btn.innerText = g;
+        menu.appendChild(btn);
     });
 
-    if(pasta) renderRoleta();
+    if (pastaAtiva) renderRoleta();
 });
 
 
-// ROLETA
-function renderRoleta(){
-    const cont=document.getElementById('roleta');
-    cont.innerHTML="";
+// 🔥 ROLETA
+function renderRoleta() {
+    const cont = document.getElementById('container-roleta');
+    cont.innerHTML = ""; 
 
-    if(!pasta) return;
+    if(!pastaAtiva || !dbDados[pastaAtiva]) return;
 
-    const lista=Object.values(dbDados[pasta]);
+    const musicas = Object.values(dbDados[pastaAtiva]);
 
-    lista.forEach((m,i)=>{
-        const c=document.createElement('div');
-        c.className=`video-card ${i===focoM?'foco-musica':''}`;
-        c.innerHTML=`<img src="https://img.youtube.com/vi/${m.videoID}/mqdefault.jpg">`;
-        cont.appendChild(c);
+    musicas.forEach((m, i) => {
+        const card = document.createElement('div');
+        card.className = `video-card ${i === focoM ? 'foco-musica' : ''}`;
+        card.innerHTML = `
+            <img src="https://img.youtube.com/vi/${m.videoID}/mqdefault.jpg">
+            <div class="info-txt">${m.titulo}</div>
+        `;
+        cont.appendChild(card);
+
+        if(i === focoM) {
+            card.scrollIntoView({ behavior: 'smooth', inline: 'center' });
+        }
     });
 }
 
 
-// FILA
-function renderFila(){
-    const cont=document.getElementById('fila');
-    cont.innerHTML="";
+// 🔥 FILA
+function renderFilaVisual() {
+    const cont = document.getElementById('container-fila');
+    cont.innerHTML = "";
 
-    fila.forEach(m=>{
-        const d=document.createElement('div');
-        d.className="fila-item";
-        d.innerHTML=`<img src="https://img.youtube.com/vi/${m.id}/mqdefault.jpg">`;
-        cont.appendChild(d);
+    fila.forEach(m => {
+        const item = document.createElement('div');
+        item.className = 'fila-item';
+        item.innerHTML = `<img src="https://img.youtube.com/vi/${m.id}/mqdefault.jpg">`;
+        cont.appendChild(item);
     });
 }
 
 
-// CONTROLES
-document.addEventListener('keydown',e=>{
+// 🔥 CONTROLES (SEM BUG)
+document.addEventListener('keydown', (e) => {
 
-    if(e.key==="Enter"){
+    if (e.key === "Enter") {
         creditos++;
-        restantes+=5;
-        document.getElementById('cred').innerText=creditos;
+        musicasRestantes += 5;
+        document.getElementById('val-creditos').innerText = creditos;
     }
 
-    if(!generos.length) return;
+    if (!generos.length) return;
 
-    if(e.key==="ArrowRight"){ focoP=(focoP+1)%generos.length; }
-    if(e.key==="ArrowLeft"){ focoP=(focoP-1+generos.length)%generos.length; }
+    if (e.key === "ArrowRight") {
+        focoP = (focoP + 1) % generos.length;
+    }
 
-    if(e.code==="Space"){
-        pasta=generos[focoP];
-        focoM=0;
+    if (e.key === "ArrowLeft") {
+        focoP = (focoP - 1 + generos.length) % generos.length;
+    }
+
+    if (e.code === "Space") {
+        e.preventDefault();
+        pastaAtiva = generos[focoP];
+        focoM = 0;
         renderRoleta();
     }
 
-    if(!pasta) return;
+    if (!pastaAtiva) return;
 
-    const lista=Object.values(dbDados[pasta]);
+    const lista = Object.values(dbDados[pastaAtiva]);
 
-    if(e.key==="ArrowDown"){ focoM=(focoM+1)%lista.length; renderRoleta(); }
-    if(e.key==="ArrowUp"){ focoM=(focoM-1+lista.length)%lista.length; renderRoleta(); }
-
-    if(e.key.toUpperCase()==="E" && restantes>0){
-
-        fila.push({
-            id: lista[focoM].videoID
-        });
-
-        restantes--;
-
-        renderFila();
-
-        // 🔥 AGORA FUNCIONA CERTO
-        if(restantes===0 && !tocando){
-            play(fila[0].id);
-        }
+    if (e.key === "ArrowDown") {
+        focoM = (focoM + 1) % lista.length;
+        renderRoleta();
     }
 
+    if (e.key === "ArrowUp") {
+        focoM = (focoM - 1 + lista.length) % lista.length;
+        renderRoleta();
+    }
+
+    if (e.key.toUpperCase() === "E" && musicasRestantes > 0) {
+
+        fila.push({ id: lista[focoM].videoID });
+
+        musicasRestantes--;
+
+        if(musicasRestantes % 5 === 0 && creditos > 0) {
+            creditos--;
+            document.getElementById('val-creditos').innerText = creditos;
+        }
+
+        renderFilaVisual();
+
+        // 🔥 INICIA AUTOMÁTICO
+        if (musicasRestantes === 0 && fila.length > 0 && !tocando) {
+            tocarVideo(fila[0].id);
+        }
+    }
 });
 </script>
-
-</body>
-</html>
