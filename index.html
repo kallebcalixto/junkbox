@@ -2,7 +2,7 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>KBS TV | ROCKOLA MP3 AUTO-NEXT</title>
+    <title>KBS TV | ROCKOLA MP3 PLAYER</title>
     <style>
         :root { --blue: #00d2ff; --pink: #ff007f; --bg: #000; }
         body { background: var(--bg); color: #fff; font-family: sans-serif; margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
@@ -21,9 +21,8 @@
         
         .tv-frame { width: 70%; max-width: 700px; aspect-ratio: 16/9; background: #111; border: 6px solid #222; border-radius: 12px; overflow: hidden; flex-shrink: 0; display: flex; align-items: center; justify-content: center; position: relative;}
 
-        /* ESTILO DO PLAYER MP3 */
-        #main-audio-player { width: 90%; position: absolute; bottom: 20px; filter: invert(1); opacity: 0.8; }
-        #capa-atual { width: 100%; height: 100%; object-fit: contain; background: #000; display: none; }
+        #main-audio-player { width: 90%; position: absolute; bottom: 20px; filter: invert(1); opacity: 0.8; z-index: 10; }
+        #capa-atual { width: 100%; height: 100%; object-fit: contain; display: none; }
 
         .fullscreen-active { 
             position: fixed !important; top: 0 !important; left: 0 !important; 
@@ -78,7 +77,6 @@
     let creditos = 0, musicasRestantes = 0, dbDados = {}, generos = [], focoP = 0, focoM = 0;
     let pastaAtiva = null, fila = [], tocando = false;
 
-    // Lógica de próxima música (Auto-next)
     audioPlayer.onended = () => {
         fila.shift();
         if (fila.length > 0) {
@@ -101,7 +99,10 @@
         capaImg.style.display = "block";
         
         audioPlayer.src = musica.linkMP3;
-        audioPlayer.play();
+        audioPlayer.play().catch(e => {
+            console.error("Erro ao tocar:", e);
+            alert("Erro ao carregar o ficheiro MP3. Verifique o link.");
+        });
         
         document.getElementById('status-txt').innerText = "TOCANDO: " + musica.titulo;
         renderFilaVisual();
@@ -147,10 +148,20 @@
     }
 
     document.addEventListener('keydown', (e) => {
-        if (e.key === "Enter") { creditos++; musicasRestantes += 5; document.getElementById('val-creditos').innerText = creditos; }
+        if (e.key === "Enter") { 
+            creditos++; 
+            musicasRestantes += 5; 
+            document.getElementById('val-creditos').innerText = creditos; 
+        }
+        
         if (e.key === "ArrowRight") { focoP = (focoP + 1) % generos.length; }
         if (e.key === "ArrowLeft") { focoP = (focoP - 1 + generos.length) % generos.length; }
-        if (e.code === "Space") { e.preventDefault(); pastaAtiva = generos[focoP]; focoM = 0; renderRoleta(); }
+        if (e.code === "Space") { 
+            e.preventDefault(); 
+            pastaAtiva = generos[focoP]; 
+            focoM = 0; 
+            renderRoleta(); 
+        }
         
         if (pastaAtiva) {
             const lista = Object.values(dbDados[pastaAtiva]);
@@ -159,11 +170,12 @@
             if (e.key.toUpperCase() === "E" && musicasRestantes > 0) {
                 fila.push(lista[focoM]);
                 musicasRestantes--;
-                if(musicasRestantes % 5 === 0 && creditos > 0) { creditos--; document.getElementById('val-creditos').innerText = creditos; }
-                renderFilaVisual();
-                if (!tocando) {
-                    tocarMP3(fila[0]);
+                if(musicasRestantes % 5 === 0 && creditos > 0) { 
+                    creditos--; 
+                    document.getElementById('val-creditos').innerText = creditos; 
                 }
+                renderFilaVisual();
+                if (!tocando) tocarMP3(fila[0]);
             }
         }
     });
