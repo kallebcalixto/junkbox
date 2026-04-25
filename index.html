@@ -89,7 +89,7 @@ let pastaAtiva=null;
 let fila=[], tocando=false;
 
 
-// PLAYER
+// 🎬 PLAYER YOUTUBE
 window.onYouTubeIframeAPIReady = () => {
     player = new YT.Player('yt-player', {
         height:'100%',
@@ -105,28 +105,41 @@ window.onYouTubeIframeAPIReady = () => {
     });
 };
 
+
+// ▶️ TOCAR
 function tocar(id){
     if(!ready) return;
+
     tocando=true;
+
     player.loadVideoById(id);
-    player.mute();
-    document.getElementById('player-container').classList.add('fullscreen-active');
+    player.mute(); // evita bloqueio autoplay
+
+    document.getElementById('player-container')
+        .classList.add('fullscreen-active');
+
     renderFila();
 }
 
+
+// ⏭️ PRÓXIMO
 function proximo(){
     fila.shift();
+
     if(fila.length>0){
         tocar(fila[0].id);
     }else{
         tocando=false;
-        document.getElementById('player-container').classList.remove('fullscreen-active');
+        document.getElementById('player-container')
+            .classList.remove('fullscreen-active');
+        document.getElementById('status').innerText = "PRONTA";
     }
+
     renderFila();
 }
 
 
-// FIREBASE
+// 🔥 FIREBASE
 onValue(ref(db,'jukebox'),snap=>{
     dbDados=snap.val()||{};
     generos=Object.keys(dbDados);
@@ -144,7 +157,7 @@ onValue(ref(db,'jukebox'),snap=>{
 });
 
 
-// ROLETA
+// 🎡 ROLETA
 function renderRoleta(){
     const cont=document.getElementById('container-roleta');
     cont.innerHTML="";
@@ -164,7 +177,7 @@ function renderRoleta(){
 }
 
 
-// FILA
+// 📺 FILA
 function renderFila(){
     const cont=document.getElementById('container-fila');
     cont.innerHTML="";
@@ -177,9 +190,10 @@ function renderFila(){
 }
 
 
-// CONTROLES
+// 🎮 CONTROLES
 document.addEventListener('keydown',e=>{
 
+    // 💰 CRÉDITOS
     if(e.key==="Enter"){
         creditos++;
         musicasRestantes+=5;
@@ -205,7 +219,9 @@ document.addEventListener('keydown',e=>{
     if(e.key==="ArrowDown"){ focoM=(focoM+1)%lista.length; renderRoleta(); }
     if(e.key==="ArrowUp"){ focoM=(focoM-1+lista.length)%lista.length; renderRoleta(); }
 
+    // 🎵 ADICIONAR MÚSICA
     if(e.key.toUpperCase()==="E" && musicasRestantes>0){
+
         fila.push({
             id: lista[focoM].videoID,
             titulo: lista[focoM].titulo
@@ -214,7 +230,8 @@ document.addEventListener('keydown',e=>{
         musicasRestantes--;
         renderFila();
 
-        if(!tocando){
+        // 🚀 INICIA AUTOMATICAMENTE QUANDO ACABAM OS CRÉDITOS
+        if(musicasRestantes === 0 && fila.length > 0){
             tocar(fila[0].id);
         }
     }
